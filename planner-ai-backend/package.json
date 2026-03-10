@@ -1,0 +1,16 @@
+{
+  "name": "planner-ai-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.6",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

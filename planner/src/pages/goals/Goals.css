@@ -1,0 +1,381 @@
+/* =========================================
+   LAYOUT & PAGE STYLING
+   ========================================= */
+
+.goals-page {
+  background-color: #dcd4c7;
+  min-height: 100vh;
+  padding-top: 120px; /* space for fixed navbar */
+}
+
+.goals-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 50px;
+  padding: 0 80px;
+}
+
+/* LEFT PANEL */
+.left-panel {
+  flex: 0 0 420px;
+  background-color: #9ea37a;
+  border-radius: 30px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.planner-box {
+  background-color: #e7e7e7;
+  width: 100%;
+  height: 350px;
+  border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #a3a3a3;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.fetch-btn {
+  margin-top: 30px;
+  padding: 15px 40px;
+  border-radius: 40px;
+  border: none;
+  background-color: #e7e7e7;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.fetch-btn:hover {
+  transform: scale(1.05);
+}
+
+/* RIGHT PANEL */
+.right-panel {
+  flex: 1;
+  background-color: #e7e7e7;
+  border-radius: 40px;
+  position: relative;
+  padding: 30px;
+  min-height: 500px;
+  overflow-y: auto;
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background-color: #e8c786;
+  border-radius: 10px;
+}
+
+/* Floating Add Button */
+.add-goal-btn {
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  background-color: #6c7543;
+  font-size: 28px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.add-goal-btn:hover {
+  transform: scale(1.1);
+}
+
+/* =========================================
+   GOAL FORM STYLING
+   ========================================= */
+
+.goal-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  animation: fadeIn 0.3s ease-in;
+  text-align: left;
+}
+
+.goal-form-container h3 {
+  font-size: 20px;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.goal-input {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #000;
+  background: transparent;
+  font-size: 18px;
+  padding: 8px 0;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.category-icons {
+  display: flex;
+  gap: 20px;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.icon-active {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0 5px;
+}
+
+.color-dots {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.color-dots span {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.save-btn {
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  background-color: #6c7543;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
+}
+
+.check-icon {
+  font-size: 30px;
+  color: #000;
+}
+
+/* =========================================
+   GOAL TAB STYLING (DISPLAY VIEW)
+   ========================================= */
+
+.goals-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.goal-tab {
+  display: flex;
+  align-items: center;
+  padding: 10px 25px;
+  border-radius: 50px;
+  width: 100%;
+  height: 85px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.goal-tab:hover {
+  transform: translateX(5px);
+}
+
+.goal-icon-circle {
+  background-color: white;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  margin-right: 20px;
+  flex-shrink: 0;
+}
+
+.goal-tab-title {
+  font-size: 22px;
+  font-weight: 700;
+  flex-grow: 1;
+  color: #000;
+  text-align: left;
+}
+
+.goal-tab-time {
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+  margin-left: 15px;
+}
+
+/* =========================================
+   TIMER VIEW STYLING
+   ========================================= */
+
+.timer-view {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  border-radius: 40px;
+  padding: 20px;
+  color: white;
+}
+
+.back-arrow {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  font-size: 30px;
+  color: white;
+  cursor: pointer;
+}
+
+.timer-goal-title {
+  font-size: 32px;
+  margin-top: 10px;
+  font-weight: 700;
+}
+
+.timer-circle-container {
+  background-color: rgba(255, 255, 255, 0.4); /* Glass effect background */
+  width: 320px;
+  height: 320px;
+  border-radius: 40px;
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.progress-badge {
+  position: absolute;
+  top: -10px;
+  background: white;
+  color: #333;
+  padding: 2px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.timer-display-main {
+  background-color: rgba(0, 0, 0, 0.2); /* Darker inner circle */
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.current-timer {
+  font-size: 48px;
+  margin: 5px 0;
+  font-weight: bold;
+}
+
+.goal-target-display {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.play-pause-btn {
+  background: none;
+  border: none;
+  font-size: 50px;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.play-pause-btn:hover {
+  transform: scale(1.1);
+}
+
+.break-counter {
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.timer-footer-stats {
+  background: white;
+  width: 90%;
+  height: 100px;
+  border-radius: 30px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  color: black;
+  margin-top: auto;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-box span { font-size: 14px; color: #666; font-weight: bold; }
+.stat-box strong { font-size: 20px; }
+
+.stat-divider {
+  width: 2px;
+  height: 60%;
+  background-color: #ddd;
+}
+
+.terminate-btn {
+  margin-top: 20px;
+  background-color: white;
+  color: #ff6b6b;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 800;
+  transition: 0.3s;
+}
+
+.terminate-btn:hover {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

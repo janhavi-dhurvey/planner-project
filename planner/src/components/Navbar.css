@@ -1,0 +1,57 @@
+.navbar {
+  position: fixed;       /* fully fixed */
+  top: 0;
+  left: 0;
+  width: 100%;
+
+  height: 80px;
+  background-color: #c8b89c;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 0 80px;       /* internal spacing */
+  z-index: 1000;
+}
+
+/* LEFT SIDE */
+.nav-left {
+  display: flex;
+  gap: 60px;
+}
+
+.nav-item {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* RIGHT SIDE */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.login-text {
+  color: white;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-icon {
+  width: 45px;
+  height: 45px;
+  background-color: black;
+  border-radius: 50%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  color: white;
+  font-size: 22px;
+}
