@@ -12,7 +12,9 @@ const Chatbot = () => {
 
   const messagesEndRef = useRef(null);
 
-  /* LOAD CHAT HISTORY */
+  /* ---------------------------------------
+     LOAD CHAT HISTORY
+  --------------------------------------- */
 
   useEffect(() => {
 
@@ -24,33 +26,53 @@ const Chatbot = () => {
 
   }, []);
 
-  /* SAVE CHAT HISTORY */
+  /* ---------------------------------------
+     SAVE CHAT HISTORY
+  --------------------------------------- */
 
   useEffect(() => {
 
     localStorage.setItem("chatHistory", JSON.stringify(messages));
-    scrollToBottom();
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
 
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  /* ---------------------------------------
+     CLEAN AI RESPONSE
+  --------------------------------------- */
 
-  /* FORMAT AI RESPONSE */
-
-  const formatAIText = (text) => {
+  const cleanAIResponse = (text) => {
 
     if (!text) return "";
 
-    return text
+    let cleaned = text;
+
+    try {
+
+      /* remove markdown JSON blocks */
+
+      cleaned = cleaned.replace(/```json[\s\S]*?```/gi, "");
+
+      /* remove raw JSON arrays */
+
+      cleaned = cleaned.replace(/\[[\s\S]*?\]/g, "");
+
+    } catch {}
+
+    return cleaned
+      .replace(/JSON:/gi, "")
       .replace(/\*\*/g, "")
-      .replace(/\n+/g, "\n")
+      .replace(/\n{2,}/g, "\n")
       .trim();
 
   };
 
-  /* SEND MESSAGE */
+  /* ---------------------------------------
+     SEND MESSAGE
+  --------------------------------------- */
 
   const sendMessage = async () => {
 
@@ -76,18 +98,18 @@ const Chatbot = () => {
         { message: userInput }
       );
 
-      const aiReply = formatAIText(response.data.reply);
+      const cleanedReply = cleanAIResponse(response.data.reply);
 
       const aiMessage = {
         role: "assistant",
-        text: aiReply
+        text: cleanedReply || "I generated a planner for you."
       };
 
       setMessages(prev => [...prev, aiMessage]);
 
-      setLoading(false);
-
-      /* SAVE AI GENERATED PLANNER */
+      /* ---------------------------------------
+         SAVE AI GENERATED PLANNER
+      --------------------------------------- */
 
       if (response.data.goals && response.data.goals.length > 0) {
 
@@ -97,8 +119,6 @@ const Chatbot = () => {
           "plannerGoals",
           JSON.stringify(planner)
         );
-
-        /* activate planner session */
 
         sessionStorage.setItem("plannerSession", "active");
 
@@ -114,41 +134,44 @@ const Chatbot = () => {
         ...prev,
         {
           role: "assistant",
-          text: "AI server error."
+          text: "⚠️ AI server error. Please try again."
         }
       ]);
 
-      setLoading(false);
-
     }
+
+    setLoading(false);
 
   };
 
-  /* NEW CHAT */
+  /* ---------------------------------------
+     START NEW CHAT
+  --------------------------------------- */
 
   const startNewChat = async () => {
 
     setMessages([]);
 
     localStorage.removeItem("chatHistory");
-
-    /* clear old planner */
-
     localStorage.removeItem("plannerGoals");
 
     sessionStorage.removeItem("plannerSession");
 
     try {
+
       await axios.post("http://localhost:5000/reset-chat");
+
     } catch {}
 
   };
 
-  /* ENTER KEY SEND */
+  /* ---------------------------------------
+     ENTER KEY SEND
+  --------------------------------------- */
 
   const handleKeyPress = (e) => {
 
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !loading) {
       sendMessage();
     }
 
@@ -241,7 +264,7 @@ const Chatbot = () => {
 
                       <button
                         onClick={() =>
-                          setInput("Plan my study day: DSA study, Gym, AI project")
+                          setInput("Plan my study day for DSA, Aptitude, and my AI project")
                         }
                       >
                         📅 Plan My Day
@@ -292,7 +315,7 @@ const Chatbot = () => {
 
                 )}
 
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef}></div>
 
               </div>
 

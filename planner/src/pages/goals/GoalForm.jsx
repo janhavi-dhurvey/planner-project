@@ -2,68 +2,128 @@ import React, { useState } from "react";
 import "./Goals.css";
 
 const GoalForm = ({ onSave, onCancel }) => {
+
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("00:00");
   const [selectedCategory, setSelectedCategory] = useState("🎯");
   const [selectedColor, setSelectedColor] = useState("#C5B4E3");
 
-  const categories = ["📖", "✏️", "🎧", "💻", "🎯", "🏃‍♀️", "🔍"];
-  const colors = ["#d4e0ad", "#C5B4E3", "#B3E5FC", "#FFD93D", "#FF6B6B"];
+  const categories = ["📖","✏️","🎧","💻","🎯","🏃‍♀️","🔍"];
+
+  const colors = [
+    "#C5B4E3",
+    "#FF6B6B",
+    "#FFD93D",
+    "#F6C177",
+    "#A8E063",
+    "#9ECae1",
+    "#8E7DBE"
+  ];
 
   const handleSave = () => {
-    if (!title) return alert("Please enter a title!");
-    onSave({ title, time, category: selectedCategory, color: selectedColor });
+
+    if (!title) {
+      alert("Please enter a title!");
+      return;
+    }
+
+    onSave({
+      title,
+      time,
+      category: selectedCategory,
+      color: selectedColor
+    });
+
   };
 
   return (
-    <div className="goal-form-container">
-      <h3>Title</h3>
-      <input 
-        type="text" 
-        placeholder="Goal Title" 
-        className="goal-input" 
+
+    <div className="goal-form">
+
+      {/* TITLE */}
+
+      <label>Title</label>
+
+      <input
+        type="text"
+        placeholder="Goal Title"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e)=>setTitle(e.target.value)}
       />
 
-      <h3>Category</h3>
+      {/* CATEGORY */}
+
+      <label>Category</label>
+
       <div className="category-icons">
-        {categories.map((icon) => (
+
+        {categories.map(icon => (
+
           <span
             key={icon}
-            onClick={() => setSelectedCategory(icon)}
-            className={selectedCategory === icon ? "icon-active" : ""}
-          >{icon}</span>
+            onClick={()=>setSelectedCategory(icon)}
+            style={{
+              transform:
+                selectedCategory === icon
+                  ? "scale(1.3)"
+                  : "scale(1)"
+            }}
+          >
+            {icon}
+          </span>
+
         ))}
+
       </div>
 
-      <h3>Daily Goal Time</h3>
-      <input 
-        type="time" 
-        className="goal-input" 
+      {/* TIME */}
+
+      <label>Daily Goal Time</label>
+
+      <input
+        type="time"
         value={time}
-        onChange={(e) => setTime(e.target.value)}
+        onChange={(e)=>setTime(e.target.value)}
       />
 
-      <h3>Color</h3>
-      <div className="color-dots">
-        {colors.map((color) => (
-          <span
+      {/* COLOR */}
+
+      <label>Color</label>
+
+      <div className="color-options">
+
+        {colors.map(color => (
+
+          <div
             key={color}
-            onClick={() => setSelectedColor(color)}
-            style={{ 
-              background: color, 
-              border: selectedColor === color ? "3px solid #6c7543" : "none" 
+            className="color-circle"
+            onClick={()=>setSelectedColor(color)}
+            style={{
+              background:color,
+              border:
+                selectedColor === color
+                  ? "3px solid #6c7543"
+                  : "none"
             }}
-          ></span>
+          />
+
         ))}
+
       </div>
 
-      <button className="save-btn" onClick={handleSave}>
-        <div className="check-icon">✓</div>
+      {/* SAVE */}
+
+      <button
+        className="save-goal-btn"
+        onClick={handleSave}
+      >
+        Save Goal
       </button>
+
     </div>
+
   );
+
 };
 
 export default GoalForm;

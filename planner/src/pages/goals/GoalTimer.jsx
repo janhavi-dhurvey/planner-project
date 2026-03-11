@@ -3,54 +3,75 @@ import "./Goals.css";
 
 const GoalTimer = ({ goal, onBack }) => {
 
-  /* USE AI SUGGESTED DURATION */
+  /* ------------------------------------------
+     GOAL DURATION (minutes → seconds)
+  ------------------------------------------ */
 
-  const totalGoalSeconds = (goal.duration || 60) * 60;
+  const totalGoalSeconds = (goal?.duration || 60) * 60;
 
   const [seconds, setSeconds] = useState(0);
-  const [isActive, setIsActive] = useState(false);
   const [breakTime, setBreakTime] = useState(0);
-  const [isBreak, setIsBreak] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isBreakMode, setIsBreakMode] = useState(false);
 
-  /* TIMER ENGINE */
+  /* ------------------------------------------
+     RESET TIMER WHEN GOAL CHANGES
+  ------------------------------------------ */
 
   useEffect(() => {
 
-    let interval = null;
+    setSeconds(0);
+    setBreakTime(0);
+    setIsRunning(false);
+    setIsBreakMode(false);
 
-    if (isActive && !isBreak) {
+  }, [goal]);
 
-      interval = setInterval(() => {
+  /* ------------------------------------------
+     TIMER ENGINE
+  ------------------------------------------ */
+
+  useEffect(() => {
+
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+
+      if (isBreakMode) {
+
+        setBreakTime(prev => prev + 1);
+
+      } else {
 
         setSeconds(prev => {
 
           if (prev >= totalGoalSeconds) {
+
             clearInterval(interval);
-            setIsActive(false);
+
+            setIsRunning(false);
+
+            alert("🎉 Goal completed!");
+
             return prev;
+
           }
 
           return prev + 1;
 
         });
 
-      }, 1000);
+      }
 
-    }
-
-    if (isBreak) {
-
-      interval = setInterval(() => {
-        setBreakTime(prev => prev + 1);
-      }, 1000);
-
-    }
+    }, 1000);
 
     return () => clearInterval(interval);
 
-  }, [isActive, isBreak, totalGoalSeconds]);
+  }, [isRunning, isBreakMode, totalGoalSeconds]);
 
-  /* FORMAT TIME */
+  /* ------------------------------------------
+     FORMAT TIME
+  ------------------------------------------ */
 
   const formatTime = (totalSeconds) => {
 
@@ -70,37 +91,59 @@ const GoalTimer = ({ goal, onBack }) => {
 
   };
 
-  /* PROGRESS */
+  /* ------------------------------------------
+     PROGRESS %
+  ------------------------------------------ */
 
-  const progress = Math.min(
-    (seconds / totalGoalSeconds) * 100,
-    100
-  ).toFixed(0);
+  const progress = totalGoalSeconds
+    ? Math.min((seconds / totalGoalSeconds) * 100, 100).toFixed(0)
+    : 0;
 
-  /* START / PAUSE */
+  /* ------------------------------------------
+     TIMER CONTROLS
+  ------------------------------------------ */
 
-  const toggleTimer = () => {
+  const startTimer = () => {
 
-    if (!isActive) {
-
-      setIsActive(true);
-      setIsBreak(false);
-
-    } else {
-
-      setIsActive(false);
-      setIsBreak(true);
-
-    }
+    setIsBreakMode(false);
+    setIsRunning(true);
 
   };
+
+  const pauseTimer = () => {
+
+    setIsRunning(false);
+
+  };
+
+  const startBreak = () => {
+
+    setIsBreakMode(true);
+    setIsRunning(true);
+
+  };
+
+  const resetTimer = () => {
+
+    setSeconds(0);
+    setBreakTime(0);
+    setIsRunning(false);
+    setIsBreakMode(false);
+
+  };
+
+  /* ------------------------------------------
+     UI
+  ------------------------------------------ */
 
   return (
 
     <div
       className="timer-view"
-      style={{ backgroundColor: goal.color }}
+      style={{ backgroundColor: goal?.color || "#888" }}
     >
+
+      {/* BACK */}
 
       <button
         className="back-arrow"
@@ -109,9 +152,13 @@ const GoalTimer = ({ goal, onBack }) => {
         ←
       </button>
 
+      {/* TITLE */}
+
       <h2 className="timer-goal-title">
-        {goal.title}
+        {goal?.title}
       </h2>
+
+      {/* TIMER DISPLAY */}
 
       <div className="timer-circle-container">
 
@@ -122,43 +169,92 @@ const GoalTimer = ({ goal, onBack }) => {
         <div className="timer-display-main">
 
           <p className="goal-target-display">
-            Start Time: {goal.time}
+            Start Time: {goal?.time}
           </p>
 
           <h1 className="current-timer">
             {formatTime(seconds)}
           </h1>
 
-          <button
-            className="play-pause-btn"
-            onClick={toggleTimer}
-          >
-            {isActive ? "⏸" : "▶"}
-          </button>
+          {/* PLAY / PAUSE */}
+
+          {!isRunning ? (
+
+            <button
+              className="play-pause-btn"
+              onClick={startTimer}
+            >
+              ▶
+            </button>
+
+          ) : (
+
+            <button
+              className="play-pause-btn"
+              onClick={pauseTimer}
+            >
+              ⏸
+            </button>
+
+          )}
+
+          {/* BREAK INDICATOR */}
 
           <p className="break-counter">
-            Break: {Math.floor(breakTime / 60)} min
+
+            {isBreakMode
+              ? `☕ Break: ${Math.floor(breakTime / 60)} min`
+              : `Break: ${Math.floor(breakTime / 60)} min`}
+
           </p>
 
         </div>
 
       </div>
 
+      {/* TIMER STATS */}
+
       <div className="timer-footer-stats">
 
         <div className="stat-box">
+
           <span>Goal Duration</span>
-          <strong>{formatTime(totalGoalSeconds)}</strong>
+
+          <strong>
+            {formatTime(totalGoalSeconds)}
+          </strong>
+
         </div>
 
         <div className="stat-divider"></div>
 
         <div className="stat-box">
+
           <span>Break Time</span>
-          <strong>{formatTime(breakTime)}</strong>
+
+          <strong>
+            {formatTime(breakTime)}
+          </strong>
+
         </div>
 
       </div>
+
+      {/* CONTROLS */}
+
+      <button
+        className="terminate-btn"
+        onClick={startBreak}
+      >
+        Start Break
+      </button>
+
+      <button
+        className="terminate-btn"
+        onClick={resetTimer}
+      >
+        Reset Timer
+      </button>
 
       <button
         className="terminate-btn"

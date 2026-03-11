@@ -11,7 +11,9 @@ const Goals = () => {
   const [goals, setGoals] = useState([]);
   const [activeGoal, setActiveGoal] = useState(null);
 
-  /* SAVE GOALS */
+  /* -----------------------------------------
+     SAVE GOALS
+  ----------------------------------------- */
 
   const saveGoals = (updatedGoals) => {
 
@@ -24,7 +26,9 @@ const Goals = () => {
 
   };
 
-  /* ADD GOAL */
+  /* -----------------------------------------
+     ADD GOAL
+  ----------------------------------------- */
 
   const handleAddGoal = (newGoal) => {
 
@@ -36,7 +40,9 @@ const Goals = () => {
 
   };
 
-  /* DELETE GOAL */
+  /* -----------------------------------------
+     DELETE GOAL
+  ----------------------------------------- */
 
   const deleteGoal = (index, e) => {
 
@@ -48,7 +54,9 @@ const Goals = () => {
 
   };
 
-  /* EDIT GOAL */
+  /* -----------------------------------------
+     EDIT GOAL
+  ----------------------------------------- */
 
   const editGoal = (index, e) => {
 
@@ -71,22 +79,30 @@ const Goals = () => {
 
   };
 
-  /* FETCH AI PLANNER */
+  /* -----------------------------------------
+     FETCH AI PLANNER
+  ----------------------------------------- */
 
   const fetchRecentChat = () => {
 
     const sessionFlag = sessionStorage.getItem("plannerSession");
 
     if (!sessionFlag) {
+
       alert("Please generate a planner using the Chatbot first.");
+
       return;
+
     }
 
     const storedGoals = localStorage.getItem("plannerGoals");
 
     if (!storedGoals) {
+
       alert("No planner data found.");
+
       return;
+
     }
 
     try {
@@ -94,7 +110,9 @@ const Goals = () => {
       const parsedGoals = JSON.parse(storedGoals);
 
       if (Array.isArray(parsedGoals)) {
+
         setGoals(parsedGoals);
+
       }
 
     } catch {
@@ -102,6 +120,51 @@ const Goals = () => {
       alert("Planner data corrupted.");
 
     }
+
+  };
+
+  /* -----------------------------------------
+     FORMAT TIME (24h → 12h)
+  ----------------------------------------- */
+
+  const formatTime = (time) => {
+
+    if (!time) return "";
+
+    const [hours, minutes] = time.split(":");
+
+    let h = parseInt(hours);
+
+    const ampm = h >= 12 ? "PM" : "AM";
+
+    h = h % 12;
+    h = h ? h : 12;
+
+    return `🕒 ${h}:${minutes} ${ampm}`;
+
+  };
+
+  /* -----------------------------------------
+     FORMAT DURATION
+  ----------------------------------------- */
+
+  const formatDuration = (duration) => {
+
+    if (!duration) return "";
+
+    if (duration >= 60) {
+
+      const hrs = Math.floor(duration / 60);
+
+      const mins = duration % 60;
+
+      if (mins === 0) return `${hrs}h`;
+
+      return `${hrs}h ${mins}m`;
+
+    }
+
+    return `${duration}m`;
 
   };
 
@@ -134,7 +197,7 @@ const Goals = () => {
 
         <div
           className="right-panel"
-          style={{ padding: activeGoal ? "0" : "30px" }}
+          style={{ padding: activeGoal ? "0" : "25px" }}
         >
 
           {activeGoal ? (
@@ -157,7 +220,13 @@ const Goals = () => {
 
               {goals.length === 0 ? (
 
-                <div style={{ textAlign: "center", opacity: 0.6 }}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    opacity: 0.6,
+                    paddingTop: "40px"
+                  }}
+                >
                   Click "Fetch Recent Chat" to load your AI planner.
                 </div>
 
@@ -180,8 +249,25 @@ const Goals = () => {
                       {goal.title}
                     </span>
 
+                    {/* TIME + DURATION */}
+
                     <span className="goal-tab-time">
-                      {goal.time}
+
+                      {formatTime(goal.time)}
+
+                      {goal.duration && (
+
+                        <span
+                          style={{
+                            marginLeft: "6px",
+                            opacity: 0.8
+                          }}
+                        >
+                          • {formatDuration(goal.duration)}
+                        </span>
+
+                      )}
+
                     </span>
 
                     <div className="goal-actions">
@@ -207,6 +293,8 @@ const Goals = () => {
                 ))
 
               )}
+
+              {/* ADD GOAL BUTTON */}
 
               <button
                 className="add-goal-btn"

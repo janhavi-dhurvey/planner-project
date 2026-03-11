@@ -1,0 +1,6 @@
+node_modules
+.env
+dist
+
+planner-ai-backend/node_modules
+planner-ai-backend/.env

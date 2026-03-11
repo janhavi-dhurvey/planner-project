@@ -1,14 +1,20 @@
 import express from "express";
 import cors from "cors";
 import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// 🔑 Paste your OpenRouter API key
-const API_KEY = "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";
+/* ------------------------------------------------
+   API KEY
+------------------------------------------------ */
+
+const API_KEY = process.env.OPENROUTER_API_KEY;
 
 /* ------------------------------------------------
    SYSTEM PROMPT
@@ -17,32 +23,64 @@ const API_KEY = "sk-or-v1-6b9bf445c6d7f89a8ea327c46fdd9a9debf1fffdfb90ce418d9277
 const systemPrompt = {
   role: "system",
   content: `
-You are an AI Productivity Planner that helps students and professionals manage their day.
+You are an AI Academic Planner that creates optimized study schedules.
 
-RULES:
+IMPORTANT RULES:
 
-1. If the user asks to plan their day, create a study routine, or organize tasks:
-   - First explain the plan in natural language.
-   - Then internally include a JSON block of tasks.
+1. Always generate realistic study schedules.
 
-Example response format:
+2. Time MUST ALWAYS be in 12-hour format with AM/PM.
 
-Here is a simple plan for your day:
+Correct examples:
+08:00 AM
+09:30 AM
+12:00 PM
+01:30 PM
+02:00 PM
 
-• 08:00 — DSA Study 📘  
-• 10:00 — Gym Workout 🏃‍♀️  
-• 11:00 — Project Work 💻  
+Never output:
+13:00
+14:00
+15:00
+
+3. Study sessions should be 60-90 minutes.
+
+4. Breaks should be 15-30 minutes.
+
+5. Lunch should be 30-60 minutes.
+
+6. Maximum 8 tasks.
+
+7. If the user specifies a time limit (example: "I have 5 hours"),
+the total duration MUST NOT exceed that limit.
+
+Example:
+
+08:00 AM — DSA Practice 📘
+09:30 AM — Break ☕
+10:00 AM — Aptitude Practice 📊
+11:30 AM — Break ☕
+12:00 PM — Lunch 🍽
+01:00 PM — GATE Study 📚
+02:30 PM — Break ☕
+03:00 PM — Mock Test 📝
+
+After the explanation include JSON exactly like this:
 
 JSON:
 [
- { "title": "DSA Study", "time": "08:00", "category": "📘", "color": "#B3E5FC" },
- { "title": "Gym Workout", "time": "10:00", "category": "🏃‍♀️", "color": "#FFD93D" },
- { "title": "Project Work", "time": "11:00", "category": "💻", "color": "#FFAB91" }
+ { "title":"DSA Practice","time":"08:00 AM","duration":90,"category":"📘","color":"#9ecae1" },
+ { "title":"Break","time":"09:30 AM","duration":20,"category":"☕","color":"#FFD93D" }
 ]
 
-2. If the user asks normal questions, respond naturally like a helpful AI assistant.
+JSON RULES:
+• Valid JSON array
+• time must include AM/PM
+• duration must be minutes
+• include title,time,duration,category,color
+• maximum 8 tasks
 
-Always keep responses clear, friendly, and professional.
+Keep explanation short.
 `
 };
 
@@ -51,6 +89,59 @@ Always keep responses clear, friendly, and professional.
 ------------------------------------------------ */
 
 let chatHistory = [systemPrompt];
+
+/* ------------------------------------------------
+   NORMALIZE TIME FORMAT
+------------------------------------------------ */
+
+function normalizeTime(time) {
+
+  if (!time) return time;
+
+  if (time.includes("AM") || time.includes("PM")) {
+    return time;
+  }
+
+  const parts = time.split(":");
+  if (parts.length !== 2) return time;
+
+  let hour = parseInt(parts[0]);
+  const minute = parts[1];
+
+  const ampm = hour >= 12 ? "PM" : "AM";
+
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+
+  return hour + ":" + minute + " " + ampm;
+}
+
+/* ------------------------------------------------
+   LIMIT PLAN BY USER TIME
+------------------------------------------------ */
+
+function enforceTimeLimit(goals, message) {
+
+  const match = message.match(/(\d+)\s*hour/);
+
+  if (!match) return goals;
+
+  const maxMinutes = parseInt(match[1]) * 60;
+
+  let total = 0;
+  const filtered = [];
+
+  for (const g of goals) {
+
+    if (total + g.duration > maxMinutes) break;
+
+    filtered.push(g);
+    total += g.duration;
+
+  }
+
+  return filtered;
+}
 
 /* ------------------------------------------------
    CHAT ENDPOINT
@@ -62,7 +153,6 @@ app.post("/chat", async (req, res) => {
 
     const { message } = req.body;
 
-    // Save user message
     chatHistory.push({
       role: "user",
       content: message
@@ -76,22 +166,23 @@ app.post("/chat", async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${API_KEY}`,
-          "Content-Type": "application/json"
+          Authorization: "Bearer " + API_KEY,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:5173",
+          "X-Title": "AI Academic Planner"
         }
       }
     );
 
     const reply = response.data.choices[0].message.content;
 
-    // Save AI reply
     chatHistory.push({
       role: "assistant",
       content: reply
     });
 
     /* ------------------------------------------------
-       EXTRACT JSON FROM AI RESPONSE
+       EXTRACT JSON
     ------------------------------------------------ */
 
     let goals = null;
@@ -105,23 +196,34 @@ app.post("/chat", async (req, res) => {
 
         goals = JSON.parse(jsonMatch[0]);
 
-        // remove JSON from visible chat
+        /* normalize time */
+
+        goals = goals.map(g => ({
+          ...g,
+          time: normalizeTime(g.time)
+        }));
+
+        /* enforce user time limit */
+
+        goals = enforceTimeLimit(goals, message);
+
+        /* remove JSON from visible reply */
+
         cleanReply = reply
           .replace(jsonMatch[0], "")
-          .replace("JSON:", "")
+          .replace(/JSON:/gi, "")
+          .replace(/```json/gi, "")
+          .replace(/```/g, "")
           .trim();
 
       }
 
     } catch (err) {
 
+      console.log("JSON parse failed:", err);
       goals = null;
 
     }
-
-    /* ------------------------------------------------
-       SEND RESPONSE
-    ------------------------------------------------ */
 
     res.json({
       reply: cleanReply,
@@ -156,9 +258,13 @@ app.post("/reset-chat", (req, res) => {
 });
 
 /* ------------------------------------------------
-   SERVER START
+   START SERVER
 ------------------------------------------------ */
 
-app.listen(5000, () => {
-  console.log("AI server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+
+  console.log("AI server running on port " + PORT);
+
 });
