@@ -1,144 +1,161 @@
 import React, { useState, useEffect, useRef } from "react";
-import Navbar from "../../components/Navbar";
-import * as XLSX from "xlsx";
-import { jsPDF } from "jspdf";
+import axios from "axios";
+import "../../App.css";
 import "./Chatbot.css";
-import ReactMarkdown from "react-markdown";
+import Navbar from "../../components/Navbar";
 
 const Chatbot = () => {
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [showUploadMenu, setShowUploadMenu] = useState(false);
-  const [history, setHistory] = useState([]);
-  const [isPlanGenerated, setIsPlanGenerated] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const chatEndRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  /* LOAD CHAT HISTORY */
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    const savedChat = localStorage.getItem("chatHistory");
+
+    if (savedChat) {
+      setMessages(JSON.parse(savedChat));
+    }
+
+  }, []);
+
+  /* SAVE CHAT HISTORY */
+
+  useEffect(() => {
+
+    localStorage.setItem("chatHistory", JSON.stringify(messages));
+    scrollToBottom();
+
   }, [messages]);
 
-  /* ---------------------------------------------
-     FILE UPLOAD
-  --------------------------------------------- */
-
-  const handleFileUpload = (e) => {
-
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setMessages(prev => [
-      ...prev,
-      { type: "user", text: `Uploaded file: ${file.name}` }
-    ]);
-
-    const reader = new FileReader();
-
-    reader.onload = (evt) => {
-
-      const wb = XLSX.read(evt.target.result, { type: "binary" });
-
-      const data = XLSX.utils.sheet_to_json(
-        wb.Sheets[wb.SheetNames[0]]
-      );
-
-      setMessages(prev => [
-        ...prev,
-        {
-          type: "bot",
-          text:
-            "Timetable uploaded successfully. I will consider this data when generating planners."
-        }
-      ]);
-    };
-
-    reader.readAsBinaryString(file);
-
-    setShowUploadMenu(false);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  /* ---------------------------------------------
-     SEND MESSAGE → AI
-  --------------------------------------------- */
+  /* FORMAT AI RESPONSE */
 
-  const handleSend = async (text = input) => {
+  const formatAIText = (text) => {
 
-    if (!text.trim()) return;
+    if (!text) return "";
 
-    const userMessage = { type: "user", text };
+    return text
+      .replace(/\*\*/g, "")
+      .replace(/\n+/g, "\n")
+      .trim();
+
+  };
+
+  /* SEND MESSAGE */
+
+  const sendMessage = async () => {
+
+    if (!input.trim()) return;
+
+    const userMessage = {
+      role: "user",
+      text: input
+    };
 
     setMessages(prev => [...prev, userMessage]);
 
+    const userInput = input;
+
     setInput("");
+
+    setLoading(true);
 
     try {
 
-      const response = await fetch("http://localhost:5000/chat", {
+      const response = await axios.post(
+        "http://localhost:5000/chat",
+        { message: userInput }
+      );
 
-        method: "POST",
+      const aiReply = formatAIText(response.data.reply);
 
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          message: text
-        })
-
-      });
-
-      const data = await response.json();
-
-      const botMessage = {
-        type: "bot",
-        text: data.reply
+      const aiMessage = {
+        role: "assistant",
+        text: aiReply
       };
 
-      setMessages(prev => [...prev, botMessage]);
+      setMessages(prev => [...prev, aiMessage]);
+
+      setLoading(false);
+
+      /* SAVE AI GENERATED PLANNER */
+
+      if (response.data.goals && response.data.goals.length > 0) {
+
+        const planner = response.data.goals;
+
+        localStorage.setItem(
+          "plannerGoals",
+          JSON.stringify(planner)
+        );
+
+        /* activate planner session */
+
+        sessionStorage.setItem("plannerSession", "active");
+
+        console.log("Planner saved:", planner);
+
+      }
 
     } catch (error) {
+
+      console.error("AI server error:", error);
 
       setMessages(prev => [
         ...prev,
         {
-          type: "bot",
-          text: "AI server not responding."
+          role: "assistant",
+          text: "AI server error."
         }
       ]);
 
+      setLoading(false);
+
     }
+
   };
 
-  /* ---------------------------------------------
-     NEW CHAT
-  --------------------------------------------- */
+  /* NEW CHAT */
 
-  const startNewChat = () => {
-
-    if (messages.length > 0) {
-
-      const summary =
-        messages.find(m => m.type === "user")?.text.substring(0, 20) || "Chat";
-
-      setHistory([
-        { id: Date.now(), title: summary, msgs: messages },
-        ...history
-      ]);
-    }
+  const startNewChat = async () => {
 
     setMessages([]);
+
+    localStorage.removeItem("chatHistory");
+
+    /* clear old planner */
+
+    localStorage.removeItem("plannerGoals");
+
+    sessionStorage.removeItem("plannerSession");
+
+    try {
+      await axios.post("http://localhost:5000/reset-chat");
+    } catch {}
+
   };
 
-  const loadPastChat = (chat) => {
-    setMessages(chat.msgs);
-  };
+  /* ENTER KEY SEND */
 
-  /* ---------------------------------------------
-     UI
-  --------------------------------------------- */
+  const handleKeyPress = (e) => {
+
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+
+  };
 
   return (
+
     <div className="chatbot-page-wrapper">
 
       <Navbar />
@@ -149,9 +166,12 @@ const Chatbot = () => {
 
           {/* SIDEBAR */}
 
-          <aside className="ai-sidebar">
+          <div className="ai-sidebar">
 
-            <button className="new-chat-btn" onClick={startNewChat}>
+            <button
+              className="new-chat-btn"
+              onClick={startNewChat}
+            >
               + New Chat
             </button>
 
@@ -161,93 +181,59 @@ const Chatbot = () => {
                 CHAT HISTORY
               </span>
 
-              {history.map(chat => (
+              {messages.length === 0 ? (
 
-                <div
-                  key={chat.id}
-                  className="history-item clickable"
-                  onClick={() => loadPastChat(chat)}
-                >
-                  💬 {chat.title}
-                </div>
-
-              ))}
-
-              {history.length === 0 && (
                 <div className="history-item">
                   No previous sessions
                 </div>
-              )}
 
-              {isPlanGenerated && (
+              ) : (
 
-                <button
-                  className="dl-btn-sidebar professional"
-                  onClick={() => {
-
-                    const doc = new jsPDF();
-
-                    doc.setFontSize(16);
-
-                    doc.text("AI Productivity Report", 10, 15);
-
-                    const splitText = doc.splitTextToSize(
-                      messages[messages.length - 1].text,
-                      180
-                    );
-
-                    doc.setFontSize(10);
-
-                    doc.text(splitText, 10, 25);
-
-                    doc.save("Productivity_Report.pdf");
-
-                  }}
-                >
-                  📥 Download Report
-                </button>
+                <div className="history-item clickable">
+                  Current Session
+                </div>
 
               )}
 
             </div>
 
+            <button className="dl-btn-sidebar professional">
+              📥 Download Report
+            </button>
+
             <div className="sidebar-footer">
 
               <div className="user-profile-card">
 
-                <div className="avatar-circle">G</div>
+                <div className="avatar-circle">
+                  G
+                </div>
 
                 <div>
-
                   <span className="user-name">
                     Guest User
                   </span>
-
-                  <span className="user-status">
-                    ○ Guest Mode
-                  </span>
-
                 </div>
 
               </div>
 
             </div>
 
-          </aside>
+          </div>
 
           {/* CHAT AREA */}
 
-          <main className="ai-viewport">
+          <div className="ai-viewport">
 
             <div className="chat-container-box">
 
               <h2 className="system-title">
-                Academic AI GPT
+                Academic Assistant AI
               </h2>
 
               <div className="chat-scroll-window">
 
-                {messages.length === 0 ? (
+                {messages.length === 0 && (
 
                   <div className="welcome-ui">
 
@@ -255,49 +241,58 @@ const Chatbot = () => {
 
                       <button
                         onClick={() =>
-                          handleSend("Create a productivity plan for today")
+                          setInput("Plan my study day: DSA study, Gym, AI project")
                         }
                       >
-                        📅 Optimize Today
+                        📅 Plan My Day
                       </button>
 
                       <button
                         onClick={() =>
-                          handleSend("Analyze my timetable")
+                          setInput("Analyze my academic productivity")
                         }
                       >
-                        📊 Precision Analysis
+                        📊 Productivity Analysis
                       </button>
 
                     </div>
 
                   </div>
 
-                ) : (
+                )}
 
-                  <div className="message-list">
+                {messages.map((msg, index) => (
 
-                    {messages.map((msg, i) => (
+                  <div
+                    key={index}
+                    className={`msg-row ${msg.role === "user" ? "user" : "bot"}`}
+                  >
 
-                      <div key={i} className={`msg-row ${msg.type}`}>
+                    <div className="msg-bubble ai-format">
 
-                        <div className="msg-bubble">
+                      {msg.text.split("\n").map((line, i) => (
+                        <p key={i}>{line}</p>
+                      ))}
 
-                          <ReactMarkdown>
-                            {msg.text}
-                          </ReactMarkdown>
+                    </div>
 
-                        </div>
+                  </div>
 
-                      </div>
+                ))}
 
-                    ))}
+                {loading && (
 
-                    <div ref={chatEndRef} />
+                  <div className="msg-row bot">
+
+                    <div className="msg-bubble typing">
+                      AI is thinking...
+                    </div>
 
                   </div>
 
                 )}
+
+                <div ref={messagesEndRef} />
 
               </div>
 
@@ -307,58 +302,17 @@ const Chatbot = () => {
 
                 <div className="input-field-container">
 
-                  <div className="upload-wrapper">
-
-                    <button
-                      className="plus-icon"
-                      onClick={() =>
-                        setShowUploadMenu(!showUploadMenu)
-                      }
-                    >
-                      +
-                    </button>
-
-                    {showUploadMenu && (
-
-                      <div className="upload-popover">
-
-                        <input
-                          type="file"
-                          id="up-file"
-                          hidden
-                          onChange={handleFileUpload}
-                        />
-
-                        <button
-                          onClick={() =>
-                            document
-                              .getElementById("up-file")
-                              .click()
-                          }
-                        >
-                          📂 Upload File
-                        </button>
-
-                      </div>
-
-                    )}
-
-                  </div>
-
                   <input
+                    type="text"
                     placeholder="Ask anything..."
                     value={input}
-                    onChange={(e) =>
-                      setInput(e.target.value)
-                    }
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleSend()
-                    }
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
                   />
 
                   <button
                     className="send-btn"
-                    onClick={() => handleSend()}
+                    onClick={sendMessage}
                   >
                     ➤
                   </button>
@@ -369,14 +323,16 @@ const Chatbot = () => {
 
             </div>
 
-          </main>
+          </div>
 
         </div>
 
       </div>
 
     </div>
+
   );
+
 };
 
 export default Chatbot;

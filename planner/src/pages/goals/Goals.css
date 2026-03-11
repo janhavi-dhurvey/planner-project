@@ -1,28 +1,33 @@
 /* =========================================
    LAYOUT & PAGE STYLING
-   ========================================= */
+========================================= */
 
 .goals-page {
   background-color: #dcd4c7;
   min-height: 100vh;
-  padding-top: 120px; /* space for fixed navbar */
+  padding-top: 110px;
 }
 
 .goals-container {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 95%;
+  max-width: 1150px;
+  margin: auto;
   display: flex;
-  gap: 50px;
-  padding: 0 80px;
+  gap: 30px;
+  padding: 20px;
+  align-items: flex-start;
 }
 
-/* LEFT PANEL */
+
+/* =========================================
+   LEFT PANEL
+========================================= */
+
 .left-panel {
-  flex: 0 0 420px;
+  flex: 0 0 320px;
   background-color: #9ea37a;
   border-radius: 30px;
-  padding: 30px;
+  padding: 25px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -31,23 +36,23 @@
 .planner-box {
   background-color: #e7e7e7;
   width: 100%;
-  height: 350px;
+  height: 300px;
   border-radius: 25px;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #a3a3a3;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .fetch-btn {
-  margin-top: 30px;
-  padding: 15px 40px;
+  margin-top: 25px;
+  padding: 14px 30px;
   border-radius: 40px;
   border: none;
   background-color: #e7e7e7;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: 0.3s;
@@ -57,13 +62,17 @@
   transform: scale(1.05);
 }
 
-/* RIGHT PANEL */
+
+/* =========================================
+   RIGHT PANEL
+========================================= */
+
 .right-panel {
   flex: 1;
   background-color: #e7e7e7;
   border-radius: 40px;
   position: relative;
-  padding: 30px;
+  padding: 25px;
   min-height: 500px;
   overflow-y: auto;
 }
@@ -77,15 +86,19 @@
   border-radius: 10px;
 }
 
-/* Floating Add Button */
+
+/* =========================================
+   ADD GOAL BUTTON
+========================================= */
+
 .add-goal-btn {
   position: absolute;
-  bottom: 25px;
-  right: 25px;
+  bottom: 20px;
+  right: 20px;
   background-color: #6c7543;
   font-size: 28px;
-  width: 70px;
-  height: 70px;
+  width: 65px;
+  height: 65px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -100,9 +113,10 @@
   transform: scale(1.1);
 }
 
+
 /* =========================================
-   GOAL FORM STYLING
-   ========================================= */
+   GOAL FORM
+========================================= */
 
 .goal-form-container {
   display: flex;
@@ -159,28 +173,28 @@
 
 .save-btn {
   position: absolute;
-  bottom: 25px;
-  right: 25px;
+  bottom: 20px;
+  right: 20px;
   background-color: #6c7543;
-  width: 70px;
-  height: 70px;
+  width: 65px;
+  height: 65px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: 0.3s;
 }
 
 .check-icon {
-  font-size: 30px;
+  font-size: 28px;
   color: #000;
 }
 
+
 /* =========================================
-   GOAL TAB STYLING (DISPLAY VIEW)
-   ========================================= */
+   GOAL LIST
+========================================= */
 
 .goals-content {
   display: flex;
@@ -192,10 +206,10 @@
 .goal-tab {
   display: flex;
   align-items: center;
-  padding: 10px 25px;
+  padding: 12px 25px;
   border-radius: 50px;
   width: 100%;
-  height: 85px;
+  height: 75px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s;
 }
@@ -206,19 +220,19 @@
 
 .goal-icon-circle {
   background-color: white;
-  width: 55px;
-  height: 55px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 28px;
-  margin-right: 20px;
+  font-size: 24px;
+  margin-right: 18px;
   flex-shrink: 0;
 }
 
 .goal-tab-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   flex-grow: 1;
   color: #000;
@@ -226,15 +240,16 @@
 }
 
 .goal-tab-time {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
   color: #333;
-  margin-left: 15px;
+  margin-left: 10px;
 }
 
+
 /* =========================================
-   TIMER VIEW STYLING
-   ========================================= */
+   TIMER VIEW
+========================================= */
 
 .timer-view {
   width: 100%;
@@ -251,26 +266,26 @@
 
 .back-arrow {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 15px;
+  left: 15px;
   background: none;
   border: none;
-  font-size: 30px;
+  font-size: 28px;
   color: white;
   cursor: pointer;
 }
 
 .timer-goal-title {
-  font-size: 32px;
+  font-size: 28px;
   margin-top: 10px;
   font-weight: 700;
 }
 
 .timer-circle-container {
-  background-color: rgba(255, 255, 255, 0.4); /* Glass effect background */
-  width: 320px;
-  height: 320px;
-  border-radius: 40px;
+  background-color: rgba(255, 255, 255, 0.4);
+  width: 280px;
+  height: 280px;
+  border-radius: 35px;
   margin: 20px 0;
   display: flex;
   justify-content: center;
@@ -285,15 +300,14 @@
   color: #333;
   padding: 2px 12px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .timer-display-main {
-  background-color: rgba(0, 0, 0, 0.2); /* Darker inner circle */
-  width: 260px;
-  height: 260px;
+  background-color: rgba(0, 0, 0, 0.2);
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -302,39 +316,32 @@
 }
 
 .current-timer {
-  font-size: 48px;
+  font-size: 40px;
   margin: 5px 0;
   font-weight: bold;
 }
 
 .goal-target-display {
-  font-size: 18px;
-  opacity: 0.9;
+  font-size: 16px;
 }
 
 .play-pause-btn {
   background: none;
   border: none;
-  font-size: 50px;
+  font-size: 45px;
   color: white;
   cursor: pointer;
-  transition: 0.2s;
-}
-
-.play-pause-btn:hover {
-  transform: scale(1.1);
 }
 
 .break-counter {
   font-size: 14px;
-  margin-top: 5px;
 }
 
 .timer-footer-stats {
   background: white;
-  width: 90%;
-  height: 100px;
-  border-radius: 30px;
+  width: 85%;
+  height: 90px;
+  border-radius: 25px;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -348,12 +355,19 @@
   align-items: center;
 }
 
-.stat-box span { font-size: 14px; color: #666; font-weight: bold; }
-.stat-box strong { font-size: 20px; }
+.stat-box span {
+  font-size: 13px;
+  color: #666;
+  font-weight: bold;
+}
+
+.stat-box strong {
+  font-size: 18px;
+}
 
 .stat-divider {
   width: 2px;
-  height: 60%;
+  height: 55%;
   background-color: #ddd;
 }
 
@@ -362,11 +376,10 @@
   background-color: white;
   color: #ff6b6b;
   border: none;
-  padding: 10px 30px;
+  padding: 10px 25px;
   border-radius: 20px;
   cursor: pointer;
-  font-weight: 800;
-  transition: 0.3s;
+  font-weight: 700;
 }
 
 .terminate-btn:hover {
@@ -374,7 +387,11 @@
   color: white;
 }
 
-/* ANIMATIONS */
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
