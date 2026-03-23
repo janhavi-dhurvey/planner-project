@@ -1,57 +1,225 @@
+/* =========================================
+   NAVBAR CONTAINER
+========================================= */
+
 .navbar {
-  position: fixed;       /* fully fixed */
+
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
 
+  width: 100%;
   height: 80px;
-  background-color: #c8b89c;
+
+  background: #c8b89c;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  padding: 0 80px;       /* internal spacing */
+  padding: 0 70px;
+
   z-index: 1000;
+
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+
+  flex-shrink: 0; /* ✅ PREVENT FLEX COLLAPSE */
+  box-sizing: border-box; /* ✅ SAFETY */
+  overflow: hidden; /* ✅ PREVENT OVERFLOW BUGS */
 }
 
-/* LEFT SIDE */
+/* =========================================
+   LEFT NAVIGATION
+========================================= */
+
 .nav-left {
+
   display: flex;
-  gap: 60px;
+  align-items: center;
+  gap: 45px;
+
+  min-width: 0; /* ✅ FIX FLEX OVERFLOW */
 }
+
+/* NAV ITEMS */
 
 .nav-item {
+
   color: white;
-  font-size: 24px;
+  text-decoration: none;
+
+  font-size: 20px;
   font-weight: 600;
+
+  letter-spacing: 0.3px;
+
   cursor: pointer;
+
+  position: relative;
+
+  transition: all 0.25s ease;
+
+  white-space: nowrap; /* ✅ PREVENT TEXT BREAK */
 }
 
-/* RIGHT SIDE */
+/* HOVER EFFECT */
+
+.nav-item:hover {
+
+  transform: translateY(-2px);
+  opacity: 0.95;
+
+}
+
+/* UNDERLINE ANIMATION */
+
+.nav-item::after {
+
+  content: "";
+
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+
+  width: 0%;
+  height: 2px;
+
+  background: white;
+
+  transition: width 0.3s ease;
+
+}
+
+.nav-item:hover::after {
+
+  width: 100%;
+
+}
+
+/* ACTIVE LINK */
+
+.nav-item.active {
+
+  font-weight: 700;
+
+}
+
+.nav-item.active::after {
+
+  width: 100%;
+
+}
+
+/* =========================================
+   RIGHT SECTION
+========================================= */
+
 .nav-right {
+
   display: flex;
   align-items: center;
   gap: 25px;
+
+  min-width: 0; /* ✅ FLEX FIX */
 }
+
+/* LOGIN / SIGNUP */
 
 .login-text {
+
   color: white;
-  font-size: 22px;
+
+  font-size: 18px;
   font-weight: 600;
+
   cursor: pointer;
+
+  transition: 0.25s ease;
+
 }
 
+.login-text:hover {
+
+  opacity: 0.85;
+
+}
+
+/* PROFILE ICON */
+
 .profile-icon {
-  width: 45px;
-  height: 45px;
-  background-color: black;
+
+  width: 44px;
+  height: 44px;
+
+  background: #2f2f2f;
+
   border-radius: 50%;
 
   display: flex;
   justify-content: center;
   align-items: center;
 
+  font-size: 20px;
   color: white;
-  font-size: 22px;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  flex-shrink: 0; /* ✅ PREVENT SHRINK */
+}
+
+.profile-icon:hover {
+
+  transform: scale(1.08);
+  background: #1f1f1f;
+
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1000px) {
+
+  .navbar {
+
+    padding: 0 35px;
+
+  }
+
+  .nav-left {
+
+    gap: 25px;
+
+  }
+
+  .nav-item {
+
+    font-size: 16px;
+
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .nav-left {
+
+    gap: 18px;
+
+  }
+
+  .nav-item {
+
+    font-size: 14px;
+
+  }
+
+  .login-text {
+
+    display: none;
+
+  }
+
 }

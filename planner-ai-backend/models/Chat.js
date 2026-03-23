@@ -1,0 +1,87 @@
+import mongoose from "mongoose";
+
+/* =========================================
+   MESSAGE SCHEMA
+========================================= */
+
+const MessageSchema = new mongoose.Schema(
+
+  {
+    role: {
+      type: String,
+      enum: ["user", "assistant", "system"],
+      required: true
+    },
+
+    content: {
+      type: String,
+      required: true,
+      trim: true
+    }
+
+  },
+
+  { _id: false }
+
+);
+
+/* =========================================
+   CHAT SCHEMA
+========================================= */
+
+const ChatSchema = new mongoose.Schema(
+
+  {
+
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true
+    },
+
+    title: {
+      type: String,
+      default: "New Chat",
+      trim: true,
+      maxlength: 120
+    },
+
+    messages: {
+      type: [MessageSchema],
+      default: []
+    },
+
+    /* =========================================
+       CHAT METADATA (future AI memory system)
+    ========================================= */
+
+    lastMessageAt: {
+      type: Date,
+      default: Date.now
+    }
+
+  },
+
+  {
+    timestamps: true
+  }
+
+);
+
+/* =========================================
+   INDEXES
+========================================= */
+
+ChatSchema.index({ userId: 1, createdAt: -1 });
+ChatSchema.index({ userId: 1, lastMessageAt: -1 });
+
+/* =========================================
+   EXPORT MODEL
+========================================= */
+
+const Chat =
+  mongoose.models.Chat ||
+  mongoose.model("Chat", ChatSchema);
+
+export default Chat;

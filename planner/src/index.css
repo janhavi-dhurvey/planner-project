@@ -1,12 +1,280 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* =========================================
+   GLOBAL RESET
+========================================= */
+
+*,
+*::before,
+*::after{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-html, body {
-  width: 100%;
-  overflow-x: hidden;
-  font-family: Arial, sans-serif;
-  background-color: #dcd4c7;
+/* =========================================
+   ROOT DESIGN VARIABLES
+========================================= */
+
+:root{
+
+  --primary-bg:#dcd4c7;
+  --navbar-bg:#c8b89c;
+  --card-bg:#ffffff;
+
+  --accent:#6c7543;
+  --accent-dark:#5b6336;
+
+  --text-dark:#222;
+  --text-light:#666;
+
+  --border-light:#e6e6e6;
+
+  --shadow-sm:0 4px 10px rgba(0,0,0,0.08);
+  --shadow-md:0 8px 20px rgba(0,0,0,0.12);
+  --shadow-lg:0 15px 35px rgba(0,0,0,0.18);
+
+  --radius-sm:8px;
+  --radius-md:16px;
+  --radius-lg:28px;
+}
+
+/* =========================================
+   HTML / BODY (FIXED)
+========================================= */
+
+html,
+body{
+  width:100%;
+  height:100%; /* ✅ FIX */
+  overflow:hidden; /* ✅ PREVENT PAGE SCROLL */
+
+  font-family:
+  "Inter",
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  Roboto,
+  Oxygen,
+  Ubuntu,
+  Cantarell,
+  "Open Sans",
+  "Helvetica Neue",
+  sans-serif;
+
+  background:var(--primary-bg);
+  color:var(--text-dark);
+
+  scroll-behavior:smooth;
+
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+
+  line-height:1.5;
+}
+
+/* =========================================
+   ROOT APP ELEMENT (FIXED)
+========================================= */
+
+#root{
+  width:100%;
+  height:100%; /* ✅ IMPORTANT */
+  display:flex;
+  flex-direction:column;
+  overflow:hidden; /* ✅ PREVENT BREAKOUT */
+}
+
+/* =========================================
+   MEDIA ELEMENTS
+========================================= */
+
+img,
+picture,
+video,
+canvas,
+svg{
+  display:block;
+  max-width:100%;
+}
+
+/* =========================================
+   FORM ELEMENTS
+========================================= */
+
+input,
+button,
+textarea,
+select{
+  font:inherit;
+  outline:none;
+}
+
+/* =========================================
+   BUTTON BASE STYLE
+========================================= */
+
+button{
+  border:none;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+
+button:hover{
+  transform:translateY(-1px);
+}
+
+button:active{
+  transform:scale(.97);
+}
+
+/* =========================================
+   LINKS
+========================================= */
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+/* =========================================
+   LIST RESET
+========================================= */
+
+ul,
+ol{
+  list-style:none;
+}
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar{
+  width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:#c9b99d;
+  border-radius:10px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background:#b8a98e;
+}
+
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+/* =========================================
+   LAYOUT UTILITIES
+========================================= */
+
+.container{
+  width:90%;
+  max-width:1300px;
+  margin:auto;
+}
+
+.flex{
+  display:flex;
+}
+
+.flex-center{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.flex-between{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.grid{
+  display:grid;
+}
+
+/* =========================================
+   TEXT UTILITIES
+========================================= */
+
+.text-center{
+  text-align:center;
+}
+
+.text-muted{
+  color:var(--text-light);
+}
+
+.text-bold{
+  font-weight:600;
+}
+
+/* =========================================
+   SPACING UTILITIES
+========================================= */
+
+.mt-10{margin-top:10px}
+.mt-20{margin-top:20px}
+.mt-30{margin-top:30px}
+
+.mb-10{margin-bottom:10px}
+.mb-20{margin-bottom:20px}
+.mb-30{margin-bottom:30px}
+
+.pt-20{padding-top:20px}
+.pb-20{padding-bottom:20px}
+
+/* =========================================
+   CARD SYSTEM
+========================================= */
+
+.card{
+  background:var(--card-bg);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-sm);
+  padding:20px;
+}
+
+/* =========================================
+   HOVER EFFECTS
+========================================= */
+
+.hover-lift{
+  transition:.25s ease;
+}
+
+.hover-lift:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-md);
+}
+
+/* =========================================
+   FADE ANIMATION
+========================================= */
+
+.fade-in{
+  animation:fadeIn .3s ease;
+}
+
+@keyframes fadeIn{
+  from{
+    opacity:0;
+    transform:translateY(6px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* =========================================
+   RESPONSIVE HELPERS
+========================================= */
+
+@media(max-width:900px){
+  .container{
+    width:95%;
+  }
 }

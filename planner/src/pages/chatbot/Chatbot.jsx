@@ -1,184 +1,152 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import "../../App.css";
 import "./Chatbot.css";
 import Navbar from "../../components/Navbar";
+import API from "../../services/api";
+import { useNavigate } from "react-router-dom";
 
 const Chatbot = () => {
+
+  const navigate = useNavigate();
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [userName, setUserName] = useState("User");
 
-  const messagesEndRef = useRef(null);
-
-  /* ---------------------------------------
-     LOAD CHAT HISTORY
-  --------------------------------------- */
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
-
-    const savedChat = localStorage.getItem("chatHistory");
-
-    if (savedChat) {
-      setMessages(JSON.parse(savedChat));
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
     }
 
-  }, []);
+    loadUser();
+    loadChats();
+  }, [navigate]);
 
-  /* ---------------------------------------
-     SAVE CHAT HISTORY
-  --------------------------------------- */
-
-  useEffect(() => {
-
-    localStorage.setItem("chatHistory", JSON.stringify(messages));
-
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth"
-    });
-
-  }, [messages]);
-
-  /* ---------------------------------------
-     CLEAN AI RESPONSE
-  --------------------------------------- */
-
-  const cleanAIResponse = (text) => {
-
-    if (!text) return "";
-
-    let cleaned = text;
-
+  const loadUser = () => {
     try {
-
-      /* remove markdown JSON blocks */
-
-      cleaned = cleaned.replace(/```json[\s\S]*?```/gi, "");
-
-      /* remove raw JSON arrays */
-
-      cleaned = cleaned.replace(/\[[\s\S]*?\]/g, "");
-
-    } catch {}
-
-    return cleaned
-      .replace(/JSON:/gi, "")
-      .replace(/\*\*/g, "")
-      .replace(/\n{2,}/g, "\n")
-      .trim();
-
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setUserName(parsed?.name || "User");
+      }
+    } catch {
+      setUserName("User");
+    }
   };
 
-  /* ---------------------------------------
-     SEND MESSAGE
-  --------------------------------------- */
+  const loadChats = async () => {
+    try {
+      const res = await API.get("/chat");
+      if (Array.isArray(res.data)) {
+        setSessions(res.data);
+      }
+    } catch (error) {
+      console.error("Chat history error:", error);
+    }
+  };
 
-  const sendMessage = async () => {
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop =
+        scrollContainerRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
-    if (!input.trim()) return;
+  /* CLEAN RESPONSE */
+  const cleanAIResponse = (text) => {
+    if (!text) return "";
 
-    const userMessage = {
-      role: "user",
-      text: input
-    };
+    return text
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/\[[\s\S]*?\]/g, "")
+      .replace(/Now.*JSON.*:/gi, "")
+      .replace(/JSON:/gi, "")
+      .replace(/\*\*/g, "")
+      .trim();
+  };
 
-    setMessages(prev => [...prev, userMessage]);
+  /* FORMAT MESSAGE */
+  const formatMessage = (text) => {
+    return text.split("\n").map((line, i) => (
+      <p key={i} className="chat-line">
+        {line}
+      </p>
+    ));
+  };
 
-    const userInput = input;
+  const sendMessage = async (customInput = null) => {
 
+    const messageToSend = customInput || input.trim();
+    if (!messageToSend || loading) return;
+
+    setMessages(prev => [...prev, { role: "user", text: messageToSend }]);
     setInput("");
-
     setLoading(true);
 
     try {
 
-      const response = await axios.post(
-        "http://localhost:5000/chat",
-        { message: userInput }
-      );
+      const res = await API.post("/chat", {
+        message: messageToSend
+      });
 
-      const cleanedReply = cleanAIResponse(response.data.reply);
+      let reply = res?.data?.reply || "⚠️ No response";
 
-      const aiMessage = {
-        role: "assistant",
-        text: cleanedReply || "I generated a planner for you."
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      /* ---------------------------------------
-         SAVE AI GENERATED PLANNER
-      --------------------------------------- */
-
-      if (response.data.goals && response.data.goals.length > 0) {
-
-        const planner = response.data.goals;
-
-        localStorage.setItem(
-          "plannerGoals",
-          JSON.stringify(planner)
-        );
-
-        sessionStorage.setItem("plannerSession", "active");
-
-        console.log("Planner saved:", planner);
-
-      }
-
-    } catch (error) {
-
-      console.error("AI server error:", error);
+      const cleanedReply = cleanAIResponse(reply);
 
       setMessages(prev => [
         ...prev,
-        {
-          role: "assistant",
-          text: "⚠️ AI server error. Please try again."
-        }
+        { role: "assistant", text: cleanedReply }
       ]);
 
+      loadChats();
+
+    } catch (error) {
+
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", text: "⚠️ Server error" }
+      ]);
+
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-
   };
-
-  /* ---------------------------------------
-     START NEW CHAT
-  --------------------------------------- */
 
   const startNewChat = async () => {
-
     setMessages([]);
-
-    localStorage.removeItem("chatHistory");
-    localStorage.removeItem("plannerGoals");
-
-    sessionStorage.removeItem("plannerSession");
-
     try {
-
-      await axios.post("http://localhost:5000/reset-chat");
-
+      await API.post("/chat/reset");
+      loadChats();
     } catch {}
-
   };
 
-  /* ---------------------------------------
-     ENTER KEY SEND
-  --------------------------------------- */
+  const openSession = (session) => {
+    if (!session?.messages) return;
+
+    const formatted = session.messages.map(msg => ({
+      role: msg.role,
+      text: cleanAIResponse(msg.content)
+    }));
+
+    setMessages(formatted);
+  };
 
   const handleKeyPress = (e) => {
-
-    if (e.key === "Enter" && !loading) {
+    if (e.key === "Enter") {
+      e.preventDefault();
       sendMessage();
     }
-
   };
 
-  return (
+  const avatar = userName.charAt(0).toUpperCase();
 
+  return (
     <div className="chatbot-page-wrapper">
 
       <Navbar />
@@ -188,159 +156,95 @@ const Chatbot = () => {
         <div className="chatbot-main-layout">
 
           {/* SIDEBAR */}
-
           <div className="ai-sidebar">
 
-            <button
-              className="new-chat-btn"
-              onClick={startNewChat}
-            >
+            <button className="new-chat-btn" onClick={startNewChat}>
               + New Chat
             </button>
 
             <div className="sidebar-history-container">
+              <span className="section-label">CHAT HISTORY</span>
 
-              <span className="section-label">
-                CHAT HISTORY
-              </span>
-
-              {messages.length === 0 ? (
-
-                <div className="history-item">
-                  No previous sessions
-                </div>
-
+              {sessions.length === 0 ? (
+                <div className="history-item">No conversations yet</div>
               ) : (
-
-                <div className="history-item clickable">
-                  Current Session
-                </div>
-
+                sessions.map((s) => (
+                  <div
+                    key={s._id}
+                    className="history-item clickable"
+                    onClick={() => openSession(s)}
+                  >
+                    {s.title}
+                  </div>
+                ))
               )}
-
             </div>
 
-            <button className="dl-btn-sidebar professional">
-              📥 Download Report
-            </button>
-
             <div className="sidebar-footer">
-
               <div className="user-profile-card">
-
-                <div className="avatar-circle">
-                  G
-                </div>
-
-                <div>
-                  <span className="user-name">
-                    Guest User
-                  </span>
-                </div>
-
+                <div className="avatar-circle">{avatar}</div>
+                <span className="user-name">{userName}</span>
               </div>
-
             </div>
 
           </div>
 
           {/* CHAT AREA */}
-
           <div className="ai-viewport">
 
             <div className="chat-container-box">
 
-              <h2 className="system-title">
-                Academic Assistant AI
-              </h2>
+              <h2 className="system-title">Academic Assistant AI</h2>
 
-              <div className="chat-scroll-window">
+              <div className="chat-scroll-window" ref={scrollContainerRef}>
 
                 {messages.length === 0 && (
-
                   <div className="welcome-ui">
-
-                    <div className="suggestion-row">
-
-                      <button
-                        onClick={() =>
-                          setInput("Plan my study day for DSA, Aptitude, and my AI project")
-                        }
-                      >
-                        📅 Plan My Day
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          setInput("Analyze my academic productivity")
-                        }
-                      >
-                        📊 Productivity Analysis
-                      </button>
-
-                    </div>
-
+                    <button onClick={() => sendMessage("Create a study plan for today")}>
+                      📅 Create Study Plan
+                    </button>
                   </div>
-
                 )}
 
                 {messages.map((msg, index) => (
-
                   <div
                     key={index}
                     className={`msg-row ${msg.role === "user" ? "user" : "bot"}`}
                   >
-
-                    <div className="msg-bubble ai-format">
-
-                      {msg.text.split("\n").map((line, i) => (
-                        <p key={i}>{line}</p>
-                      ))}
-
+                    <div className="msg-bubble">
+                      {formatMessage(msg.text)}
                     </div>
-
                   </div>
-
                 ))}
 
                 {loading && (
-
                   <div className="msg-row bot">
-
                     <div className="msg-bubble typing">
-                      AI is thinking...
+                      Thinking...
                     </div>
-
                   </div>
-
                 )}
-
-                <div ref={messagesEndRef}></div>
 
               </div>
 
-              {/* INPUT */}
-
+              {/* ✅ FIXED INPUT */}
               <div className="input-section">
 
-                <div className="input-field-container">
+                <input
+                  type="text"
+                  className="chat-input"
+                  placeholder="Ask anything..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                />
 
-                  <input
-                    type="text"
-                    placeholder="Ask anything..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                  />
-
-                  <button
-                    className="send-btn"
-                    onClick={sendMessage}
-                  >
-                    ➤
-                  </button>
-
-                </div>
+                <button
+                  className="send-btn"
+                  onClick={() => sendMessage()}
+                >
+                  ➤
+                </button>
 
               </div>
 
@@ -353,9 +257,7 @@ const Chatbot = () => {
       </div>
 
     </div>
-
   );
-
 };
 
 export default Chatbot;

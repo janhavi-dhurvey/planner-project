@@ -1,49 +1,364 @@
-/* App.css */
+/* =========================================
+   GLOBAL DESIGN VARIABLES
+========================================= */
 
-/* Remove constraints so the Navbar and Chatbot can fill the screen */
-#root {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  text-align: left; /* Overrides the default Vite centering */
+:root{
+
+  --primary-bg:#dcd4c7;
+  --accent:#6c7543;
+  --accent-dark:#5b6336;
+
+  --card-bg:#ffffff;
+
+  --text-dark:#222;
+  --text-light:#666;
+
+  --border-light:#e5e5e5;
+
+  --shadow-soft:0 6px 20px rgba(0,0,0,0.08);
+  --shadow-hover:0 10px 25px rgba(0,0,0,0.12);
+
 }
 
-/* Base styles for the logo (Standard Vite styles) */
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* =========================================
+   ROOT CONTAINER
+========================================= */
+
+#root{
+
+  width:100%;
+  min-height:100vh;
+
+  display:flex;
+  flex-direction:column;
+
+  background:var(--primary-bg);
+
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+/* =========================================
+   BODY
+========================================= */
+
+body{
+
+  margin:0;
+  padding:0;
+
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
+
+  background:var(--primary-bg);
+
+  color:var(--text-dark);
+
+  overflow-x:hidden;
+
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+
+  line-height:1.5;
+
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* =========================================
+   UNIVERSAL RESET
+========================================= */
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* =========================================
+   MEDIA ELEMENTS
+========================================= */
+
+img,
+video,
+canvas,
+svg{
+
+  max-width:100%;
+  display:block;
+
+}
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar{
+  width:8px;
+}
+
+::-webkit-scrollbar-thumb{
+
+  background:#c9b99d;
+
+  border-radius:10px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background:#b8a98e;
+}
+
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+/* =========================================
+   LINKS
+========================================= */
+
+a{
+
+  text-decoration:none;
+  color:inherit;
+
+}
+
+/* =========================================
+   BUTTON GLOBAL STYLE
+========================================= */
+
+button{
+
+  font-family:inherit;
+  border:none;
+  cursor:pointer;
+
+  transition:all .2s ease;
+
+}
+
+button:hover{
+
+  transform:translateY(-1px);
+
+}
+
+button:active{
+
+  transform:scale(.98);
+
+}
+
+/* =========================================
+   PAGE WRAPPERS
+========================================= */
+
+.page-wrapper{
+
+  width:100%;
+  min-height:100vh;
+
+  display:flex;
+  flex-direction:column;
+
+}
+
+/* =========================================
+   CONTENT CENTERER
+========================================= */
+
+.content-centerer{
+
+  width:100%;
+  max-width:1400px;
+
+  margin:auto;
+
+  padding:20px;
+
+}
+
+/* =========================================
+   CARD SYSTEM
+========================================= */
+
+.card{
+
+  background:var(--card-bg);
+
+  border-radius:20px;
+
+  padding:20px;
+
+  box-shadow:var(--shadow-soft);
+
+  transition:.25s ease;
+
+}
+
+.card:hover{
+
+  transform:translateY(-3px);
+
+  box-shadow:var(--shadow-hover);
+
+}
+
+/* =========================================
+   FLEX HELPERS
+========================================= */
+
+.flex{
+  display:flex;
+}
+
+.flex-column{
+  display:flex;
+  flex-direction:column;
+}
+
+.flex-center{
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+}
+
+.flex-between{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+}
+
+/* =========================================
+   GRID HELPERS
+========================================= */
+
+.grid{
+  display:grid;
+}
+
+.grid-2{
+
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:20px;
+
+}
+
+.grid-3{
+
+  display:grid;
+
+  grid-template-columns:1fr 1fr 1fr;
+
+  gap:20px;
+
+}
+
+/* =========================================
+   FADE ANIMATION
+========================================= */
+
+.fade-in{
+
+  animation:fadeIn .35s ease;
+
+}
+
+@keyframes fadeIn{
+
+  from{
+
+    opacity:0;
+    transform:translateY(6px);
+
   }
-  to {
-    transform: rotate(360deg);
+
+  to{
+
+    opacity:1;
+    transform:translateY(0);
+
   }
+
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+/* =========================================
+   HOVER SCALE EFFECT
+========================================= */
+
+.hover-scale{
+
+  transition:transform .25s ease;
+
+}
+
+.hover-scale:hover{
+
+  transform:scale(1.05);
+
+}
+
+/* =========================================
+   UTILITY SPACING
+========================================= */
+
+.mt-10{margin-top:10px}
+.mt-20{margin-top:20px}
+.mt-30{margin-top:30px}
+
+.mb-10{margin-bottom:10px}
+.mb-20{margin-bottom:20px}
+.mb-30{margin-bottom:30px}
+
+.pt-20{padding-top:20px}
+.pb-20{padding-bottom:20px}
+
+/* =========================================
+   TEXT UTILITIES
+========================================= */
+
+.text-center{
+  text-align:center;
+}
+
+.text-muted{
+  opacity:.65;
+}
+
+.text-bold{
+  font-weight:600;
+}
+
+/* =========================================
+   RESPONSIVE HELPERS
+========================================= */
+
+@media(max-width:900px){
+
+  .grid-2{
+    grid-template-columns:1fr;
   }
-}
 
-.card {
-  padding: 2em;
-}
+  .grid-3{
+    grid-template-columns:1fr;
+  }
 
-.read-the-docs {
-  color: #888;
 }

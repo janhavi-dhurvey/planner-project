@@ -1,13 +1,104 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>planner</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+
+  <!-- =========================================
+       BASIC META
+  ========================================= -->
+
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AI Productivity Planner</title>
+
+  <!-- =========================================
+       SEO DESCRIPTION
+  ========================================= -->
+
+  <meta
+    name="description"
+    content="AI Productivity Planner helps students generate smart study schedules, track goals, manage tasks, and improve productivity using AI."
+  />
+
+  <meta
+    name="keywords"
+    content="AI planner, productivity planner, study planner, AI study assistant, student productivity tool"
+  />
+
+  <meta name="author" content="AI Productivity Planner" />
+
+  <!-- =========================================
+       OPEN GRAPH (SOCIAL SHARING)
+  ========================================= -->
+
+  <meta property="og:title" content="AI Productivity Planner" />
+  <meta property="og:description"
+    content="Generate AI-powered study plans, track productivity, and manage goals easily." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/vite.svg" />
+
+  <!-- =========================================
+       FAVICON
+  ========================================= -->
+
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="apple-touch-icon" href="/vite.svg" />
+
+  <!-- =========================================
+       GOOGLE FONT
+  ========================================= -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- =========================================
+       THEME COLOR
+  ========================================= -->
+
+  <meta name="theme-color" content="#c8b89c" />
+
+</head>
+
+<body>
+
+  <!-- =========================================
+       REACT ROOT
+  ========================================= -->
+
+  <div id="root">
+
+    <!-- Fallback Loading UI -->
+
+    <div
+      style="
+        height:100vh;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        font-family:Inter, sans-serif;
+        font-weight:600;
+        color:#444;
+      "
+    >
+      Loading AI Planner...
+    </div>
+
+  </div>
+
+  <!-- =========================================
+       VITE ENTRY
+  ========================================= -->
+
+  <script type="module" src="/src/main.jsx"></script>
+
+</body>
+
 </html>

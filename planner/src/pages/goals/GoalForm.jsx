@@ -3,10 +3,14 @@ import "./Goals.css";
 
 const GoalForm = ({ onSave, onCancel }) => {
 
-  const [title, setTitle] = useState("");
-  const [time, setTime] = useState("00:00");
-  const [selectedCategory, setSelectedCategory] = useState("🎯");
-  const [selectedColor, setSelectedColor] = useState("#C5B4E3");
+  const [title,setTitle] = useState("");
+  const [startTime,setStartTime] = useState("");
+  const [duration,setDuration] = useState(60);
+  const [selectedCategory,setSelectedCategory] = useState("🎯");
+  const [selectedColor,setSelectedColor] = useState("#C5B4E3");
+
+  const [error,setError] = useState("");
+  const [saving,setSaving] = useState(false);
 
   const categories = ["📖","✏️","🎧","💻","🎯","🏃‍♀️","🔍"];
 
@@ -20,35 +24,186 @@ const GoalForm = ({ onSave, onCancel }) => {
     "#8E7DBE"
   ];
 
-  const handleSave = () => {
+  /* =========================================
+     FORMAT TIME
+  ========================================= */
 
-    if (!title) {
-      alert("Please enter a title!");
-      return;
-    }
+  const formatTime = (time) => {
 
-    onSave({
-      title,
-      time,
-      category: selectedCategory,
-      color: selectedColor
-    });
+    if(!time) return "";
+
+    const [hours,minutes] = time.split(":");
+
+    let h = parseInt(hours);
+
+    const ampm = h >= 12 ? "PM":"AM";
+
+    h = h % 12;
+    h = h ? h : 12;
+
+    return `${h}:${minutes} ${ampm}`;
 
   };
 
-  return (
+  /* =========================================
+     RESET FORM
+  ========================================= */
+
+  const resetForm = () => {
+
+    setTitle("");
+    setStartTime("");
+    setDuration(60);
+    setSelectedCategory("🎯");
+    setSelectedColor("#C5B4E3");
+    setError("");
+
+  };
+
+  /* =========================================
+     HANDLE SAVE
+  ========================================= */
+
+  const handleSave = async () => {
+
+    if(saving) return;
+
+    const trimmedTitle = title.trim();
+
+    if(!trimmedTitle){
+
+      setError("Please enter a goal title");
+      return;
+
+    }
+
+    if(!startTime){
+
+      setError("Please select a start time");
+      return;
+
+    }
+
+    const durationMin = parseInt(duration);
+
+    if(!durationMin || durationMin <= 0){
+
+      setError("Duration must be greater than 0");
+      return;
+
+    }
+
+    if(durationMin > 600){
+
+      setError("Duration too long");
+      return;
+
+    }
+
+    const newGoal = {
+
+      title: trimmedTitle,
+
+      time: formatTime(startTime),
+
+      duration: durationMin,
+
+      category: selectedCategory,
+
+      color: selectedColor
+
+    };
+
+    try{
+
+      setSaving(true);
+
+      await onSave(newGoal);
+
+      resetForm();
+
+    }catch{
+
+      setError("Failed to save goal");
+
+    }finally{
+
+      setSaving(false);
+
+    }
+
+  };
+
+  /* =========================================
+     ENTER KEY SUBMIT
+  ========================================= */
+
+  const handleKeyPress = (e) => {
+
+    if(e.key === "Enter"){
+
+      e.preventDefault();
+      handleSave();
+
+    }
+
+  };
+
+  return(
 
     <div className="goal-form">
 
+      <h3 style={{marginBottom:"10px"}}>
+        ➕ Add New Goal
+      </h3>
+
+      {error && (
+
+        <div
+          style={{
+            color:"red",
+            marginBottom:"10px",
+            fontSize:"14px"
+          }}
+        >
+          {error}
+        </div>
+
+      )}
+
       {/* TITLE */}
 
-      <label>Title</label>
+      <label>Goal Title</label>
 
       <input
         type="text"
-        placeholder="Goal Title"
+        placeholder="Example: Study DSA"
         value={title}
         onChange={(e)=>setTitle(e.target.value)}
+        onKeyDown={handleKeyPress}
+      />
+
+      {/* START TIME */}
+
+      <label>Start Time</label>
+
+      <input
+        type="time"
+        value={startTime}
+        onChange={(e)=>setStartTime(e.target.value)}
+      />
+
+      {/* DURATION */}
+
+      <label>Duration (minutes)</label>
+
+      <input
+        type="number"
+        value={duration}
+        min="10"
+        max="600"
+        step="5"
+        onChange={(e)=>setDuration(e.target.value)}
       />
 
       {/* CATEGORY */}
@@ -65,8 +220,9 @@ const GoalForm = ({ onSave, onCancel }) => {
             style={{
               transform:
                 selectedCategory === icon
-                  ? "scale(1.3)"
-                  : "scale(1)"
+                  ? "scale(1.35)"
+                  : "scale(1)",
+              transition:"0.2s"
             }}
           >
             {icon}
@@ -75,16 +231,6 @@ const GoalForm = ({ onSave, onCancel }) => {
         ))}
 
       </div>
-
-      {/* TIME */}
-
-      <label>Daily Goal Time</label>
-
-      <input
-        type="time"
-        value={time}
-        onChange={(e)=>setTime(e.target.value)}
-      />
 
       {/* COLOR */}
 
@@ -103,7 +249,12 @@ const GoalForm = ({ onSave, onCancel }) => {
               border:
                 selectedColor === color
                   ? "3px solid #6c7543"
-                  : "none"
+                  : "none",
+              transform:
+                selectedColor === color
+                  ? "scale(1.15)"
+                  : "scale(1)",
+              transition:"0.2s"
             }}
           />
 
@@ -111,14 +262,37 @@ const GoalForm = ({ onSave, onCancel }) => {
 
       </div>
 
-      {/* SAVE */}
+      {/* BUTTONS */}
 
-      <button
-        className="save-goal-btn"
-        onClick={handleSave}
+      <div
+        style={{
+          marginTop:"25px",
+          display:"flex",
+          gap:"10px"
+        }}
       >
-        Save Goal
-      </button>
+
+        <button
+          className="save-goal-btn"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Save Goal"}
+        </button>
+
+        {onCancel && (
+
+          <button
+            className="save-goal-btn"
+            style={{background:"#999"}}
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+
+        )}
+
+      </div>
 
     </div>
 

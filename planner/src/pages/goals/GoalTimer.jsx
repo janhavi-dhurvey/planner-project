@@ -1,153 +1,231 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import API from "../../services/api";
 import "./Goals.css";
 
 const GoalTimer = ({ goal, onBack }) => {
 
-  /* ------------------------------------------
-     GOAL DURATION (minutes → seconds)
-  ------------------------------------------ */
-
   const totalGoalSeconds = (goal?.duration || 60) * 60;
 
-  const [seconds, setSeconds] = useState(0);
-  const [breakTime, setBreakTime] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isBreakMode, setIsBreakMode] = useState(false);
+  const [seconds,setSeconds] = useState(0);
+  const [breakSeconds,setBreakSeconds] = useState(0);
+  const [isRunning,setIsRunning] = useState(false);
+  const [isBreakMode,setIsBreakMode] = useState(false);
 
-  /* ------------------------------------------
+  const timerRef = useRef(null);
+
+  /* =========================================
      RESET TIMER WHEN GOAL CHANGES
-  ------------------------------------------ */
+  ========================================= */
 
-  useEffect(() => {
+  useEffect(()=>{
+
+    clearInterval(timerRef.current);
 
     setSeconds(0);
-    setBreakTime(0);
+    setBreakSeconds(0);
     setIsRunning(false);
     setIsBreakMode(false);
 
-  }, [goal]);
+  },[goal]);
 
-  /* ------------------------------------------
+  /* =========================================
      TIMER ENGINE
-  ------------------------------------------ */
+  ========================================= */
 
-  useEffect(() => {
+  useEffect(()=>{
 
-    if (!isRunning) return;
+    if(!isRunning) return;
 
-    const interval = setInterval(() => {
+    timerRef.current = setInterval(()=>{
 
-      if (isBreakMode) {
+      if(isBreakMode){
 
-        setBreakTime(prev => prev + 1);
+        setBreakSeconds(prev => prev + 1);
 
-      } else {
+      }else{
 
         setSeconds(prev => {
 
-          if (prev >= totalGoalSeconds) {
+          const next = prev + 1;
 
-            clearInterval(interval);
+          if(next >= totalGoalSeconds){
+
+            clearInterval(timerRef.current);
 
             setIsRunning(false);
 
+            handleGoalCompletion();
+
             alert("🎉 Goal completed!");
 
-            return prev;
+            return totalGoalSeconds;
 
           }
 
-          return prev + 1;
+          return next;
 
         });
 
       }
 
-    }, 1000);
+    },1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(timerRef.current);
 
-  }, [isRunning, isBreakMode, totalGoalSeconds]);
+  },[isRunning,isBreakMode,totalGoalSeconds]);
 
-  /* ------------------------------------------
+  /* =========================================
+     SAVE GOAL COMPLETION
+  ========================================= */
+
+  const handleGoalCompletion = async () => {
+
+    try{
+
+      if(goal?._id){
+
+        await API.put(`/goals/${goal._id}`,{
+          ...goal,
+          status:"completed"
+        });
+
+      }
+
+    }catch(err){
+
+      console.log("Goal completion API failed");
+
+    }
+
+    /* local fallback */
+
+    try{
+
+      const completed =
+        JSON.parse(localStorage.getItem("completedGoals")) || [];
+
+      completed.push({
+
+        title:goal?.title || "Goal",
+        duration:goal?.duration || 0,
+        date:new Date().toLocaleDateString()
+
+      });
+
+      localStorage.setItem(
+        "completedGoals",
+        JSON.stringify(completed)
+      );
+
+    }catch{
+
+      console.log("Local completion save error");
+
+    }
+
+  };
+
+  /* =========================================
      FORMAT TIME
-  ------------------------------------------ */
+  ========================================= */
 
-  const formatTime = (totalSeconds) => {
+  const formatTime = (totalSeconds)=>{
 
-    const hrs = Math.floor(totalSeconds / 3600)
+    const hrs = Math.floor(totalSeconds/3600)
       .toString()
-      .padStart(2, "0");
+      .padStart(2,"0");
 
-    const mins = Math.floor((totalSeconds % 3600) / 60)
+    const mins = Math.floor((totalSeconds%3600)/60)
       .toString()
-      .padStart(2, "0");
+      .padStart(2,"0");
 
-    const secs = (totalSeconds % 60)
+    const secs = (totalSeconds%60)
       .toString()
-      .padStart(2, "0");
+      .padStart(2,"0");
 
     return `${hrs}:${mins}:${secs}`;
 
   };
 
-  /* ------------------------------------------
+  /* =========================================
+     REMAINING TIME
+  ========================================= */
+
+  const remainingSeconds = Math.max(
+    totalGoalSeconds - seconds,
+    0
+  );
+
+  /* =========================================
      PROGRESS %
-  ------------------------------------------ */
+  ========================================= */
 
-  const progress = totalGoalSeconds
-    ? Math.min((seconds / totalGoalSeconds) * 100, 100).toFixed(0)
-    : 0;
+  const progress =
+    totalGoalSeconds > 0
+      ? Math.min((seconds / totalGoalSeconds) * 100,100)
+      : 0;
 
-  /* ------------------------------------------
+  /* =========================================
      TIMER CONTROLS
-  ------------------------------------------ */
+  ========================================= */
 
-  const startTimer = () => {
+  const startTimer = ()=>{
+
+    if(isRunning) return;
 
     setIsBreakMode(false);
     setIsRunning(true);
 
   };
 
-  const pauseTimer = () => {
+  const pauseTimer = ()=>{
 
     setIsRunning(false);
 
   };
 
-  const startBreak = () => {
+  const startBreak = ()=>{
+
+    clearInterval(timerRef.current);
 
     setIsBreakMode(true);
     setIsRunning(true);
 
   };
 
-  const resetTimer = () => {
+  const resetTimer = ()=>{
+
+    clearInterval(timerRef.current);
 
     setSeconds(0);
-    setBreakTime(0);
+    setBreakSeconds(0);
     setIsRunning(false);
     setIsBreakMode(false);
 
   };
 
-  /* ------------------------------------------
-     UI
-  ------------------------------------------ */
+  const terminateGoal = ()=>{
 
-  return (
+    clearInterval(timerRef.current);
+
+    setIsRunning(false);
+
+    onBack();
+
+  };
+
+  return(
 
     <div
       className="timer-view"
-      style={{ backgroundColor: goal?.color || "#888" }}
+      style={{backgroundColor:goal?.color || "#888"}}
     >
 
-      {/* BACK */}
+      {/* BACK BUTTON */}
 
       <button
         className="back-arrow"
-        onClick={onBack}
+        onClick={terminateGoal}
       >
         ←
       </button>
@@ -158,25 +236,27 @@ const GoalTimer = ({ goal, onBack }) => {
         {goal?.title}
       </h2>
 
-      {/* TIMER DISPLAY */}
+      {/* TIMER */}
 
       <div className="timer-circle-container">
 
         <div className="progress-badge">
-          {progress}%
+          {Math.round(progress)}%
         </div>
 
         <div className="timer-display-main">
 
           <p className="goal-target-display">
-            Start Time: {goal?.time}
+            Start Time: {goal?.time || "Now"}
           </p>
 
           <h1 className="current-timer">
             {formatTime(seconds)}
           </h1>
 
-          {/* PLAY / PAUSE */}
+          <p style={{fontSize:"13px"}}>
+            Remaining: {formatTime(remainingSeconds)}
+          </p>
 
           {!isRunning ? (
 
@@ -198,21 +278,19 @@ const GoalTimer = ({ goal, onBack }) => {
 
           )}
 
-          {/* BREAK INDICATOR */}
+          {isBreakMode && (
 
-          <p className="break-counter">
+            <p className="break-counter">
+              ☕ Break: {Math.floor(breakSeconds/60)} min
+            </p>
 
-            {isBreakMode
-              ? `☕ Break: ${Math.floor(breakTime / 60)} min`
-              : `Break: ${Math.floor(breakTime / 60)} min`}
-
-          </p>
+          )}
 
         </div>
 
       </div>
 
-      {/* TIMER STATS */}
+      {/* STATS */}
 
       <div className="timer-footer-stats">
 
@@ -233,7 +311,7 @@ const GoalTimer = ({ goal, onBack }) => {
           <span>Break Time</span>
 
           <strong>
-            {formatTime(breakTime)}
+            {formatTime(breakSeconds)}
           </strong>
 
         </div>
@@ -258,7 +336,7 @@ const GoalTimer = ({ goal, onBack }) => {
 
       <button
         className="terminate-btn"
-        onClick={onBack}
+        onClick={terminateGoal}
       >
         Terminate Goal
       </button>
