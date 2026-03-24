@@ -14,9 +14,7 @@ const Goals = () => {
   const [activeGoal, setActiveGoal] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* =========================================
-     LOAD GOALS
-  ========================================= */
+  /* ================= LOAD GOALS ================= */
   const loadGoals = useCallback(async () => {
     try {
       const res = await API.get("/goals");
@@ -44,27 +42,16 @@ const Goals = () => {
     loadGoals();
   }, [loadGoals]);
 
-  useEffect(() => {
-    const handleFocus = () => loadGoals();
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [loadGoals]);
-
-  /* =========================================
-     ADD GOAL (🔥 FIXED)
-  ========================================= */
+  /* ================= ADD GOAL ================= */
   const handleAddGoal = async (newGoal) => {
     try {
-
-      const payload = {
+      await API.post("/goals", {
         title: newGoal.title,
         time: newGoal.time,
         duration: Number(newGoal.duration),
         category: newGoal.category || "📘",
         color: newGoal.color || "#89CFF0"
-      };
-
-      await API.post("/goals", payload);
+      });
 
       await loadGoals();
       setIsFormOpen(false);
@@ -77,7 +64,6 @@ const Goals = () => {
 
   const deleteGoal = async (goalId, e) => {
     e.stopPropagation();
-
     if (!window.confirm("Delete this goal?")) return;
 
     try {
@@ -96,7 +82,6 @@ const Goals = () => {
 
     try {
       await API.put(`/goals/${goal._id}`, {
-        ...goal,
         title: newTitle.trim()
       });
       await loadGoals();
@@ -105,32 +90,12 @@ const Goals = () => {
     }
   };
 
-  /* =========================================
-     FORMAT
-  ========================================= */
   const formatDuration = (d) => {
     if (!d) return "";
     return d >= 60
       ? `${Math.floor(d / 60)}h ${d % 60 || ""}`.trim()
       : `${d}m`;
   };
-
-  /* =========================================
-     ACTIVE GOAL
-  ========================================= */
-  const getCurrentGoalId = () => {
-    const now = new Date();
-
-    for (let g of goals) {
-      const start = new Date(`1970 ${g.time}`);
-      const end = new Date(start.getTime() + g.duration * 60000);
-
-      if (now >= start && now <= end) return g._id;
-    }
-    return null;
-  };
-
-  const currentGoalId = getCurrentGoalId();
 
   return (
     <div className="goals-page">
@@ -159,10 +124,15 @@ const Goals = () => {
               onBack={() => setActiveGoal(null)}
             />
           ) : isFormOpen ? (
-            <GoalForm
-              onSave={handleAddGoal}
-              onCancel={() => setIsFormOpen(false)}
-            />
+
+            /* 🔥 THIS IS WHERE FIX HAPPENS */
+            <div className="goal-form-wrapper">
+              <GoalForm
+                onSave={handleAddGoal}
+                onCancel={() => setIsFormOpen(false)}
+              />
+            </div>
+
           ) : (
 
             <div className="goals-content">
@@ -176,46 +146,35 @@ const Goals = () => {
                 </div>
               ) : (
 
-                goals.map((goal) => {
+                goals.map((goal) => (
+                  <div
+                    key={goal._id}
+                    className="goal-tab"
+                    style={{ background: goal.color }}
+                    onClick={() => setActiveGoal(goal)}
+                  >
 
-                  const isActive = goal._id === currentGoalId;
-
-                  return (
-                    <div
-                      key={goal._id}
-                      className="goal-tab"
-                      style={{
-                        background: goal.color,
-                        border: isActive ? "3px solid #2ecc71" : "none"
-                      }}
-                      onClick={() => setActiveGoal(goal)}
-                    >
-
-                      {/* LEFT ICON */}
-                      <div className="goal-icon-circle">
-                        {goal.category}
-                      </div>
-
-                      {/* CENTER INFO */}
-                      <div className="goal-info">
-                        <span className="goal-tab-title">
-                          {goal.title}
-                        </span>
-
-                        <span className="goal-tab-time">
-                          {goal.time} • {formatDuration(goal.duration)}
-                        </span>
-                      </div>
-
-                      {/* RIGHT ACTIONS */}
-                      <div className="goal-actions">
-                        <button onClick={(e) => editGoal(goal, e)}>✏</button>
-                        <button onClick={(e) => deleteGoal(goal._id, e)}>🗑</button>
-                      </div>
-
+                    <div className="goal-icon-circle">
+                      {goal.category}
                     </div>
-                  );
-                })
+
+                    <div className="goal-info">
+                      <span className="goal-tab-title">
+                        {goal.title}
+                      </span>
+
+                      <span className="goal-tab-time">
+                        {goal.time} • {formatDuration(goal.duration)}
+                      </span>
+                    </div>
+
+                    <div className="goal-actions">
+                      <button onClick={(e) => editGoal(goal, e)}>✏</button>
+                      <button onClick={(e) => deleteGoal(goal._id, e)}>🗑</button>
+                    </div>
+
+                  </div>
+                ))
 
               )}
 

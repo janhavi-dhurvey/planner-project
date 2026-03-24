@@ -81,13 +81,13 @@
 }
 
 /* =========================================
-   GOAL CARD (🔥 FIXED)
+   GOAL CARD
 ========================================= */
 
 .goal-tab{
   display:flex;
   align-items:center;
-  justify-content:space-between; /* 🔥 KEY FIX */
+  justify-content:space-between;
 
   padding:16px 20px;
   border-radius:40px;
@@ -103,10 +103,6 @@
   box-shadow:0 10px 20px rgba(0,0,0,0.18);
 }
 
-/* =========================================
-   LEFT ICON
-========================================= */
-
 .goal-icon-circle{
   width:46px;
   height:46px;
@@ -120,10 +116,6 @@
   box-shadow:0 3px 8px rgba(0,0,0,0.15);
 }
 
-/* =========================================
-   CENTER CONTENT (🔥 FIX)
-========================================= */
-
 .goal-info{
   display:flex;
   flex-direction:column;
@@ -135,9 +127,6 @@
 .goal-tab-title{
   font-size:17px;
   font-weight:700;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
 .goal-tab-time{
@@ -146,10 +135,6 @@
   opacity:0.8;
   margin-top:2px;
 }
-
-/* =========================================
-   RIGHT ACTIONS (🔥 FIX)
-========================================= */
 
 .goal-actions{
   display:flex;
@@ -172,16 +157,129 @@
   transform:scale(1.1);
 }
 
-.goal-actions button:first-child:hover{
-  background:#e6f1ff;
+/* =========================================
+   🔥 OLD STYLE FORM (RESTORED)
+========================================= */
+
+.goal-form-old{
+  width:100%;
+  max-width:600px;
+  margin:auto;
 }
 
-.goal-actions button:last-child:hover{
-  background:#ffdede;
+/* TITLE */
+.goal-form-title{
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:25px;
+  color:#444;
+}
+
+/* INPUT GROUP */
+.goal-input-group{
+  margin-bottom:22px;
+  display:flex;
+  flex-direction:column;
+}
+
+.goal-input-group label{
+  font-size:14px;
+  margin-bottom:6px;
+  color:#555;
+}
+
+/* INPUT STYLE (UNDERLINE STYLE LIKE OLD UI) */
+.goal-input-group input{
+  border:none;
+  border-bottom:2px solid #999;
+  padding:8px 5px;
+  font-size:15px;
+  background:transparent;
+  outline:none;
+}
+
+.goal-input-group input:focus{
+  border-bottom:2px solid #6c7543;
+}
+
+/* CATEGORY */
+.category-icons{
+  display:flex;
+  gap:12px;
+  font-size:20px;
+  margin-top:5px;
+}
+
+.category-icons span{
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.category-icons span:hover{
+  transform:scale(1.2);
+}
+
+.active-icon{
+  transform:scale(1.3);
+}
+
+/* COLOR */
+.color-options{
+  display:flex;
+  gap:12px;
+  margin-top:8px;
+}
+
+.color-circle{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.color-circle:hover{
+  transform:scale(1.2);
+}
+
+.active-color{
+  border:3px solid #6c7543;
+}
+
+/* BUTTONS */
+.goal-form-actions{
+  display:flex;
+  justify-content:flex-start;
+  gap:12px;
+  margin-top:25px;
+}
+
+.goal-save{
+  background:#6c7543;
+  color:white;
+  border:none;
+  padding:10px 20px;
+  border-radius:20px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.goal-cancel{
+  background:#bdbdbd;
+  border:none;
+  padding:10px 20px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+/* ERROR */
+.goal-error{
+  color:red;
+  margin-bottom:10px;
 }
 
 /* =========================================
-   ADD GOAL BUTTON
+   ADD BUTTON
 ========================================= */
 
 .add-goal-btn{
@@ -200,27 +298,10 @@
   justify-content:center;
   cursor:pointer;
   box-shadow:0 8px 18px rgba(0,0,0,0.3);
-  transition:0.25s ease;
 }
 
 .add-goal-btn:hover{
   transform:scale(1.15);
-}
-
-/* =========================================
-   EMPTY STATE
-========================================= */
-
-.empty-state{
-  text-align:center;
-  color:#666;
-  font-size:15px;
-  margin-top:40px;
-}
-
-.empty-state span{
-  font-size:13px;
-  opacity:0.7;
 }
 
 /* =========================================

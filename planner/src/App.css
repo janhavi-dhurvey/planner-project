@@ -25,15 +25,11 @@
 ========================================= */
 
 #root{
-
   width:100%;
   min-height:100vh;
-
   display:flex;
   flex-direction:column;
-
   background:var(--primary-bg);
-
 }
 
 /* =========================================
@@ -41,7 +37,6 @@
 ========================================= */
 
 body{
-
   margin:0;
   padding:0;
 
@@ -59,7 +54,6 @@ body{
     sans-serif;
 
   background:var(--primary-bg);
-
   color:var(--text-dark);
 
   overflow-x:hidden;
@@ -68,7 +62,6 @@ body{
   -moz-osx-font-smoothing:grayscale;
 
   line-height:1.5;
-
 }
 
 /* =========================================
@@ -89,10 +82,8 @@ img,
 video,
 canvas,
 svg{
-
   max-width:100%;
   display:block;
-
 }
 
 /* =========================================
@@ -104,11 +95,8 @@ svg{
 }
 
 ::-webkit-scrollbar-thumb{
-
   background:#c9b99d;
-
   border-radius:10px;
-
 }
 
 ::-webkit-scrollbar-thumb:hover{
@@ -124,36 +112,40 @@ svg{
 ========================================= */
 
 a{
-
   text-decoration:none;
   color:inherit;
-
 }
 
 /* =========================================
-   BUTTON GLOBAL STYLE
+   BUTTON GLOBAL STYLE (IMPROVED)
 ========================================= */
 
 button{
-
   font-family:inherit;
   border:none;
   cursor:pointer;
-
   transition:all .2s ease;
-
 }
 
 button:hover{
-
   transform:translateY(-1px);
-
 }
 
 button:active{
+  transform:scale(.97);
+}
 
-  transform:scale(.98);
+/* =========================================
+   🔥 INPUT GLOBAL FIX (IMPORTANT)
+   This fixes your form look consistency
+========================================= */
 
+input{
+  font-family:inherit;
+}
+
+input:focus{
+  outline:none;
 }
 
 /* =========================================
@@ -161,13 +153,10 @@ button:active{
 ========================================= */
 
 .page-wrapper{
-
   width:100%;
   min-height:100vh;
-
   display:flex;
   flex-direction:column;
-
 }
 
 /* =========================================
@@ -175,14 +164,10 @@ button:active{
 ========================================= */
 
 .content-centerer{
-
   width:100%;
   max-width:1400px;
-
   margin:auto;
-
   padding:20px;
-
 }
 
 /* =========================================
@@ -190,34 +175,23 @@ button:active{
 ========================================= */
 
 .card{
-
   background:var(--card-bg);
-
   border-radius:20px;
-
   padding:20px;
-
   box-shadow:var(--shadow-soft);
-
   transition:.25s ease;
-
 }
 
 .card:hover{
-
   transform:translateY(-3px);
-
   box-shadow:var(--shadow-hover);
-
 }
 
 /* =========================================
    FLEX HELPERS
 ========================================= */
 
-.flex{
-  display:flex;
-}
+.flex{ display:flex; }
 
 .flex-column{
   display:flex;
@@ -225,51 +199,31 @@ button:active{
 }
 
 .flex-center{
-
   display:flex;
-
   justify-content:center;
-
   align-items:center;
-
 }
 
 .flex-between{
-
   display:flex;
-
   justify-content:space-between;
-
   align-items:center;
-
 }
 
 /* =========================================
    GRID HELPERS
 ========================================= */
 
-.grid{
-  display:grid;
-}
+.grid{ display:grid; }
 
 .grid-2{
-
-  display:grid;
-
   grid-template-columns:1fr 1fr;
-
   gap:20px;
-
 }
 
 .grid-3{
-
-  display:grid;
-
   grid-template-columns:1fr 1fr 1fr;
-
   gap:20px;
-
 }
 
 /* =========================================
@@ -277,27 +231,18 @@ button:active{
 ========================================= */
 
 .fade-in{
-
   animation:fadeIn .35s ease;
-
 }
 
 @keyframes fadeIn{
-
   from{
-
     opacity:0;
     transform:translateY(6px);
-
   }
-
   to{
-
     opacity:1;
     transform:translateY(0);
-
   }
-
 }
 
 /* =========================================
@@ -305,15 +250,11 @@ button:active{
 ========================================= */
 
 .hover-scale{
-
   transition:transform .25s ease;
-
 }
 
 .hover-scale:hover{
-
   transform:scale(1.05);
-
 }
 
 /* =========================================
@@ -335,20 +276,14 @@ button:active{
    TEXT UTILITIES
 ========================================= */
 
-.text-center{
-  text-align:center;
-}
+.text-center{ text-align:center; }
 
-.text-muted{
-  opacity:.65;
-}
+.text-muted{ opacity:.65; }
 
-.text-bold{
-  font-weight:600;
-}
+.text-bold{ font-weight:600; }
 
 /* =========================================
-   RESPONSIVE HELPERS
+   RESPONSIVE
 ========================================= */
 
 @media(max-width:900px){

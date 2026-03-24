@@ -3,16 +3,16 @@ import "./Goals.css";
 
 const GoalForm = ({ onSave, onCancel }) => {
 
-  const [title,setTitle] = useState("");
-  const [startTime,setStartTime] = useState("");
-  const [duration,setDuration] = useState(60);
-  const [selectedCategory,setSelectedCategory] = useState("🎯");
-  const [selectedColor,setSelectedColor] = useState("#C5B4E3");
+  const [title, setTitle] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [duration, setDuration] = useState(60);
+  const [category, setCategory] = useState("📘");
+  const [color, setColor] = useState("#89CFF0");
 
-  const [error,setError] = useState("");
-  const [saving,setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const categories = ["📖","✏️","🎧","💻","🎯","🏃‍♀️","🔍"];
+  const categories = ["📘","✏️","🎧","💻","🎯","🏃‍♀️","🔍"];
 
   const colors = [
     "#C5B4E3",
@@ -24,280 +24,144 @@ const GoalForm = ({ onSave, onCancel }) => {
     "#8E7DBE"
   ];
 
-  /* =========================================
-     FORMAT TIME
-  ========================================= */
-
+  /* ================= FORMAT TIME ================= */
   const formatTime = (time) => {
+    if (!time) return "";
 
-    if(!time) return "";
+    const [h, m] = time.split(":");
+    let hour = parseInt(h);
 
-    const [hours,minutes] = time.split(":");
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
 
-    let h = parseInt(hours);
-
-    const ampm = h >= 12 ? "PM":"AM";
-
-    h = h % 12;
-    h = h ? h : 12;
-
-    return `${h}:${minutes} ${ampm}`;
-
+    return `${hour}:${m} ${ampm}`;
   };
 
-  /* =========================================
-     RESET FORM
-  ========================================= */
-
-  const resetForm = () => {
-
-    setTitle("");
-    setStartTime("");
-    setDuration(60);
-    setSelectedCategory("🎯");
-    setSelectedColor("#C5B4E3");
-    setError("");
-
-  };
-
-  /* =========================================
-     HANDLE SAVE
-  ========================================= */
-
+  /* ================= SAVE ================= */
   const handleSave = async () => {
 
-    if(saving) return;
+    if (saving) return;
 
-    const trimmedTitle = title.trim();
-
-    if(!trimmedTitle){
-
-      setError("Please enter a goal title");
+    if (!title.trim()) {
+      setError("Enter a goal title");
       return;
-
     }
 
-    if(!startTime){
-
-      setError("Please select a start time");
+    if (!startTime) {
+      setError("Select start time");
       return;
-
     }
 
-    const durationMin = parseInt(duration);
-
-    if(!durationMin || durationMin <= 0){
-
-      setError("Duration must be greater than 0");
+    if (duration <= 0) {
+      setError("Invalid duration");
       return;
-
     }
 
-    if(durationMin > 600){
-
-      setError("Duration too long");
-      return;
-
-    }
-
-    const newGoal = {
-
-      title: trimmedTitle,
-
-      time: formatTime(startTime),
-
-      duration: durationMin,
-
-      category: selectedCategory,
-
-      color: selectedColor
-
-    };
-
-    try{
-
+    try {
       setSaving(true);
 
-      await onSave(newGoal);
+      await onSave({
+        title: title.trim(),
+        time: formatTime(startTime),
+        duration: Number(duration),
+        category,
+        color
+      });
 
-      resetForm();
+      setTitle("");
+      setStartTime("");
+      setDuration(60);
+      setError("");
 
-    }catch{
-
-      setError("Failed to save goal");
-
-    }finally{
-
+    } catch {
+      setError("Failed to save");
+    } finally {
       setSaving(false);
-
     }
-
   };
 
-  /* =========================================
-     ENTER KEY SUBMIT
-  ========================================= */
+  return (
+    <div className="goal-form-old">
 
-  const handleKeyPress = (e) => {
+      <h2 className="goal-form-title">+ Add New Goal</h2>
 
-    if(e.key === "Enter"){
-
-      e.preventDefault();
-      handleSave();
-
-    }
-
-  };
-
-  return(
-
-    <div className="goal-form">
-
-      <h3 style={{marginBottom:"10px"}}>
-        ➕ Add New Goal
-      </h3>
-
-      {error && (
-
-        <div
-          style={{
-            color:"red",
-            marginBottom:"10px",
-            fontSize:"14px"
-          }}
-        >
-          {error}
-        </div>
-
-      )}
+      {error && <p className="goal-error">{error}</p>}
 
       {/* TITLE */}
+      <div className="goal-input-group">
+        <label>Goal Title</label>
+        <input
+          type="text"
+          placeholder="Example: Study DSA"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
 
-      <label>Goal Title</label>
-
-      <input
-        type="text"
-        placeholder="Example: Study DSA"
-        value={title}
-        onChange={(e)=>setTitle(e.target.value)}
-        onKeyDown={handleKeyPress}
-      />
-
-      {/* START TIME */}
-
-      <label>Start Time</label>
-
-      <input
-        type="time"
-        value={startTime}
-        onChange={(e)=>setStartTime(e.target.value)}
-      />
+      {/* TIME */}
+      <div className="goal-input-group">
+        <label>Start Time</label>
+        <input
+          type="time"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+        />
+      </div>
 
       {/* DURATION */}
-
-      <label>Duration (minutes)</label>
-
-      <input
-        type="number"
-        value={duration}
-        min="10"
-        max="600"
-        step="5"
-        onChange={(e)=>setDuration(e.target.value)}
-      />
+      <div className="goal-input-group">
+        <label>Duration (minutes)</label>
+        <input
+          type="number"
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+        />
+      </div>
 
       {/* CATEGORY */}
-
-      <label>Category</label>
-
-      <div className="category-icons">
-
-        {categories.map(icon => (
-
-          <span
-            key={icon}
-            onClick={()=>setSelectedCategory(icon)}
-            style={{
-              transform:
-                selectedCategory === icon
-                  ? "scale(1.35)"
-                  : "scale(1)",
-              transition:"0.2s"
-            }}
-          >
-            {icon}
-          </span>
-
-        ))}
-
+      <div className="goal-input-group">
+        <label>Category</label>
+        <div className="category-icons">
+          {categories.map((c) => (
+            <span
+              key={c}
+              onClick={() => setCategory(c)}
+              className={category === c ? "active-icon" : ""}
+            >
+              {c}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* COLOR */}
-
-      <label>Color</label>
-
-      <div className="color-options">
-
-        {colors.map(color => (
-
-          <div
-            key={color}
-            className="color-circle"
-            onClick={()=>setSelectedColor(color)}
-            style={{
-              background:color,
-              border:
-                selectedColor === color
-                  ? "3px solid #6c7543"
-                  : "none",
-              transform:
-                selectedColor === color
-                  ? "scale(1.15)"
-                  : "scale(1)",
-              transition:"0.2s"
-            }}
-          />
-
-        ))}
-
+      <div className="goal-input-group">
+        <label>Color</label>
+        <div className="color-options">
+          {colors.map((clr) => (
+            <div
+              key={clr}
+              className={`color-circle ${color === clr ? "active-color" : ""}`}
+              style={{ background: clr }}
+              onClick={() => setColor(clr)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* BUTTONS */}
-
-      <div
-        style={{
-          marginTop:"25px",
-          display:"flex",
-          gap:"10px"
-        }}
-      >
-
-        <button
-          className="save-goal-btn"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : "Save Goal"}
+      <div className="goal-form-actions">
+        <button className="goal-save" onClick={handleSave}>
+          {saving ? "Saving..." : "Save"}
         </button>
 
-        {onCancel && (
-
-          <button
-            className="save-goal-btn"
-            style={{background:"#999"}}
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-
-        )}
-
+        <button className="goal-cancel" onClick={onCancel}>
+          Cancel
+        </button>
       </div>
 
     </div>
-
   );
-
 };
 
 export default GoalForm;
