@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 ========================================= */
 
 const MessageSchema = new mongoose.Schema(
-
   {
     role: {
       type: String,
@@ -17,12 +16,15 @@ const MessageSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true
+    },
+
+    /* ✅ SAFE STRUCTURED DATA */
+    structuredData: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [] // always safe array
     }
-
   },
-
   { _id: false }
-
 );
 
 /* =========================================
@@ -30,9 +32,7 @@ const MessageSchema = new mongoose.Schema(
 ========================================= */
 
 const ChatSchema = new mongoose.Schema(
-
   {
-
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -52,21 +52,14 @@ const ChatSchema = new mongoose.Schema(
       default: []
     },
 
-    /* =========================================
-       CHAT METADATA (future AI memory system)
-    ========================================= */
-
     lastMessageAt: {
       type: Date,
       default: Date.now
     }
-
   },
-
   {
     timestamps: true
   }
-
 );
 
 /* =========================================

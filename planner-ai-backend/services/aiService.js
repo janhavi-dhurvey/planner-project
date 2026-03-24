@@ -1,14 +1,11 @@
 import axios from "axios";
 
 /* =========================================
-   OPENROUTER CONFIG
+   CONFIG
 ========================================= */
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-/* 🔥 BEST MODEL */
-const DEFAULT_MODEL =
-  process.env.AI_MODEL || "openai/gpt-4o-mini";
+const DEFAULT_MODEL = process.env.AI_MODEL || "openai/gpt-4o-mini";
 
 /* =========================================
    AXIOS CLIENT
@@ -29,55 +26,48 @@ const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /* =========================================
-   🔥 SYSTEM PROMPT (FINAL FIX)
+   🔥 STRICT SYSTEM PROMPT (FINAL FIX)
 ========================================= */
 
 const systemPrompt = {
   role: "system",
   content: `
-You are a friendly academic planner AI.
+You are a professional academic planner.
 
-Create a clean, structured, and practical study plan.
+Your job is to generate a CLEAN and SIMPLE study plan.
 
-IMPORTANT RULES:
+STRICT RULES:
 
-- DO NOT write long paragraphs
-- DO NOT explain theory
-- DO NOT include JSON or technical output
-- DO NOT say "let’s assume time"
-- ALWAYS start from current real-world time
-- Keep tone simple, human, and motivating
+- NO markdown (no ###, no **, no symbols)
+- NO long explanations
+- NO paragraphs
+- NO extra text
+- ONLY clean structured output
 
 FORMAT STRICTLY:
 
-📅 Study Planner
-⏰ Total Time: X hours
+Study Planner
 
-🔹 Session 1
-Subject - Time - Duration
+Total Time: X hours
 
-🔹 Session 2
-Break - Time - Duration
+1. Subject - 05:00 PM - 60 minutes
+2. Break - 06:00 PM - 15 minutes
+3. Subject - 06:15 PM - 60 minutes
+4. Break - 07:15 PM - 15 minutes
+5. Subject - 07:30 PM - 60 minutes
 
-🔹 Session 3
-Subject - Time - Duration
+Tips:
+- Stay consistent
+- Take proper breaks
 
-Continue logically.
-
-OPTIONAL:
-Add 2-3 short tips at the end.
-
-DO NOT:
-- Add "Raw JSON"
-- Add explanations
-- Add unnecessary text
-
-Keep it clean like ChatGPT.
+IMPORTANT:
+- Keep output professional and minimal
+- Do not add anything extra
 `
 };
 
 /* =========================================
-   FALLBACK (REAL-TIME BASED)
+   FALLBACK (CLEAN FORMAT)
 ========================================= */
 
 const fallbackPlanner = () => {
@@ -99,25 +89,19 @@ const fallbackPlanner = () => {
   };
 
   return `
-📅 Study Planner
-⏰ Total Time: ~3 hours
+Study Planner
 
-🔹 Session 1
-${make("Study", 60)}
+Total Time: ~3 hours
 
-🔹 Session 2
-${make("Break", 15)}
+1. ${make("Study", 60)}
+2. ${make("Break", 15)}
+3. ${make("Study", 60)}
+4. ${make("Break", 15)}
+5. ${make("Revision", 45)}
 
-🔹 Session 3
-${make("Study", 60)}
-
-🔹 Session 4
-${make("Break", 15)}
-
-🔹 Session 5
-${make("Revision", 45)}
-
-Stay consistent and avoid burnout 💪
+Tips:
+- Stay focused
+- Avoid distractions
 `;
 };
 
@@ -130,14 +114,13 @@ export const askAI = async (messages) => {
   try {
 
     if (!process.env.OPENROUTER_API_KEY) {
-      throw new Error("❌ OPENROUTER_API_KEY missing");
+      throw new Error("OPENROUTER_API_KEY missing");
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      throw new Error("❌ Messages array required");
+      throw new Error("Messages array required");
     }
 
-    /* 🔥 ADD REAL-TIME CONTEXT */
     const currentTime = new Date().toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit"
@@ -145,14 +128,14 @@ export const askAI = async (messages) => {
 
     const timePrompt = {
       role: "system",
-      content: `Current time is ${currentTime}. Start plan from this time.`
+      content: `Current time is ${currentTime}. Start plan from this exact time.`
     };
 
     /* ✅ FINAL MESSAGE STACK */
     const safeMessages = [
       systemPrompt,
       timePrompt,
-      ...messages.slice(-6)
+      ...messages.slice(-5)
     ];
 
     let lastError;
@@ -162,15 +145,14 @@ export const askAI = async (messages) => {
       try {
 
         console.log(`🧠 AI Request (Attempt ${attempt + 1})`);
-        console.log("🤖 Model:", DEFAULT_MODEL);
 
         const response = await aiClient.post(
           "",
           {
             model: DEFAULT_MODEL,
             messages: safeMessages,
-            temperature: 0.7,
-            max_tokens: 1200
+            temperature: 0.5, // 🔥 more deterministic
+            max_tokens: 800   // 🔥 prevents long paragraphs
           },
           {
             headers: {
@@ -185,10 +167,10 @@ export const askAI = async (messages) => {
         const aiReply =
           response?.data?.choices?.[0]?.message?.content ||
           response?.data?.choices?.[0]?.text ||
-          "";
+          null;
 
-        if (!aiReply || aiReply.trim() === "") {
-          throw new Error("Empty AI response");
+        if (!aiReply || typeof aiReply !== "string") {
+          throw new Error("Invalid AI response");
         }
 
         console.log("✅ AI SUCCESS");

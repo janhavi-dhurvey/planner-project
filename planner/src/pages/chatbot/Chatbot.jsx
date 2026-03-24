@@ -64,22 +64,14 @@ const Chatbot = () => {
 
     return text
       .replace(/```[\s\S]*?```/g, "")
-      .replace(/\[[\s\S]*?\]/g, "")
-      .replace(/Now.*JSON.*:/gi, "")
-      .replace(/JSON:/gi, "")
+      .replace(/#+/g, "")
       .replace(/\*\*/g, "")
       .trim();
   };
 
-  /* FORMAT MESSAGE */
-  const formatMessage = (text) => {
-    return text.split("\n").map((line, i) => (
-      <p key={i} className="chat-line">
-        {line}
-      </p>
-    ));
-  };
-
+  /* =========================================
+     🔥 UPDATED SEND MESSAGE (FINAL CLEAN)
+  ========================================= */
   const sendMessage = async (customInput = null) => {
 
     const messageToSend = customInput || input.trim();
@@ -95,13 +87,15 @@ const Chatbot = () => {
         message: messageToSend
       });
 
-      let reply = res?.data?.reply || "⚠️ No response";
+      const reply = res?.data?.reply || "";
 
-      const cleanedReply = cleanAIResponse(reply);
-
+      /* ✅ ONLY TEXT (NO PLANNER UI) */
       setMessages(prev => [
         ...prev,
-        { role: "assistant", text: cleanedReply }
+        {
+          role: "assistant",
+          text: cleanAIResponse(reply)
+        }
       ]);
 
       loadChats();
@@ -126,6 +120,7 @@ const Chatbot = () => {
     } catch {}
   };
 
+  /* 🔥 FIX SESSION LOAD (TEXT ONLY) */
   const openSession = (session) => {
     if (!session?.messages) return;
 
@@ -212,7 +207,9 @@ const Chatbot = () => {
                     className={`msg-row ${msg.role === "user" ? "user" : "bot"}`}
                   >
                     <div className="msg-bubble">
-                      {formatMessage(msg.text)}
+                      {msg.text?.split("\n").map((line, i) => (
+                        <p key={i} className="chat-line">{line}</p>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -227,7 +224,6 @@ const Chatbot = () => {
 
               </div>
 
-              {/* ✅ FIXED INPUT */}
               <div className="input-section">
 
                 <input

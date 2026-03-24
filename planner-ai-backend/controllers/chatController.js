@@ -36,31 +36,40 @@ const isPlannerRequest = (text) => {
 };
 
 /* =========================================
-   SYSTEM PROMPT
+   🔥 CLEAN SYSTEM PROMPT (STRICT FORMAT)
 ========================================= */
 const buildSystemPrompt = (subjects = []) => {
 
-  const now = new Date();
-  const currentTime = formatTime(now);
+  const currentTime = formatTime(new Date());
 
   return {
     role: "system",
     content: `
-You are a professional academic planner.
+You are an academic planner AI.
 
-Current time: ${currentTime}
+Generate a clean and professional study plan.
 
-Create a clean, structured study plan.
+STRICT RULES:
 
-FORMAT STRICTLY:
-1. Subject - 09:30 PM - 60 minutes
-2. Break - 10:30 PM - 15 minutes
+- NO markdown (no ###, no **, no symbols)
+- NO long explanations
+- NO paragraphs
+- ONLY structured clean output
 
-RULES:
-- Start from current time
-- Maintain correct chronological order
-- No explanations
-- No JSON
+FORMAT:
+
+Study Planner
+
+Total Time: X hours
+
+1. Subject - ${currentTime} - 60 minutes
+2. Break - time - 15 minutes
+3. Subject - time - 60 minutes
+
+Rules:
+- 4 to 6 sessions only
+- Break after each session
+- Keep it realistic
 
 Subjects: ${subjects.join(", ") || "General Study"}
 `
@@ -68,17 +77,16 @@ Subjects: ${subjects.join(", ") || "General Study"}
 };
 
 /* =========================================
-   GOAL PARSER (🔥 NO SORTING)
+   EXTRACT GOALS
 ========================================= */
 const extractGoals = (reply) => {
-
   try {
 
     const lines = reply.split("\n");
+
     const goals = [];
 
     lines.forEach(line => {
-
       const match = line.match(
         /(.*?)-\s*(\d{1,2}:\d{2}\s?[APMapm]{2})\s*-\s*(\d+)/
       );
@@ -92,27 +100,29 @@ const extractGoals = (reply) => {
           color: match[1].toLowerCase().includes("break") ? "#FFD93D" : "#89CFF0"
         });
       }
-
     });
 
-    /* ❌ NO SORTING HERE */
     return goals.length ? goals : null;
 
   } catch (err) {
-    console.error("Goal parse error:", err.message);
+    console.error("Parse error:", err.message);
     return null;
   }
 };
 
 /* =========================================
-   CLEAN REPLY
+   CLEAN RESPONSE (REMOVE GARBAGE)
 ========================================= */
 const cleanReply = (reply) => {
-  return reply.replace(/```[\s\S]*?```/g, "").trim();
+  return reply
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/#+/g, "")
+    .replace(/\*\*/g, "")
+    .trim();
 };
 
 /* =========================================
-   SEND MESSAGE (🔥 FINAL FIX)
+   SEND MESSAGE (🔥 FINAL CLEAN VERSION)
 ========================================= */
 export const sendMessage = async (req, res) => {
 
@@ -134,28 +144,34 @@ export const sendMessage = async (req, res) => {
 
     const reply = await askAI(chatHistory);
 
-    chatHistory.push({ role: "assistant", content: reply });
-
-    /* SAVE CHAT */
-    await Chat.create({
-      userId,
-      title: message.slice(0, 40),
-      messages: [
-        { role: "user", content: message },
-        { role: "assistant", content: reply }
-      ]
-    });
-
+    /* 🔥 ONLY EXTRACT GOALS IF NEEDED */
     let goals = null;
 
-    /* =========================================
-       SAVE GOALS (🔥 ORDER FIX)
-    ========================================= */
     if (isPlannerRequest(message)) {
-
       goals = extractGoals(reply);
+    }
 
-      if (Array.isArray(goals) && goals.length > 0) {
+    /* ✅ SAVE CHAT */
+    try {
+      await Chat.create({
+        userId,
+        title: message.slice(0, 40),
+        messages: [
+          { role: "user", content: message },
+          {
+            role: "assistant",
+            content: cleanReply(reply),
+            structuredData: Array.isArray(goals) ? goals : []
+          }
+        ]
+      });
+    } catch (err) {
+      console.error("Chat save error:", err.message);
+    }
+
+    /* ✅ SAVE GOALS (ONLY FOR PLANNER) */
+    if (Array.isArray(goals) && goals.length > 0) {
+      try {
 
         await Goal.deleteMany({ userId });
 
@@ -163,28 +179,30 @@ export const sendMessage = async (req, res) => {
           userId,
           title: g.title || "Study",
           time: g.time || "",
-          duration: Number(g.duration) || 60,
+          duration: g.duration || 60,
           category: g.category || "📘",
           color: g.color || "#89CFF0",
           status: "pending",
-          order: index   // ✅ THIS IS THE ONLY ORDER SOURCE
+          order: index
         }));
 
         await Goal.insertMany(safeGoals);
 
-        console.log("✅ Goals saved in PERFECT order");
+        console.log("✅ Planner saved");
 
+      } catch (err) {
+        console.error("Goal save error:", err.message);
       }
     }
 
+    /* 🔥 IMPORTANT: DO NOT SEND GOALS TO FRONTEND */
     res.json({
-      reply: cleanReply(reply),
-      goals
+      reply: cleanReply(reply)
     });
 
   } catch (err) {
 
-    console.error("🔥 CHAT ERROR:", err.message);
+    console.error("🔥 CHAT ERROR:", err);
 
     res.status(500).json({
       error: "AI server error"
@@ -202,8 +220,8 @@ export const getChats = async (req, res) => {
       .limit(20);
 
     res.json(chats);
-
-  } catch {
+  } catch (err) {
+    console.error("Fetch chats error:", err.message);
     res.status(500).json({ error: "Failed" });
   }
 };
@@ -215,7 +233,8 @@ export const resetChat = async (req, res) => {
   try {
     userChats[req.userId] = [];
     res.json({ message: "Chat reset" });
-  } catch {
+  } catch (err) {
+    console.error("Reset error:", err.message);
     res.status(500).json({ error: "Failed" });
   }
 };
