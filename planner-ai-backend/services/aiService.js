@@ -26,48 +26,44 @@ const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /* =========================================
-   🔥 STRICT SYSTEM PROMPT (FINAL FIX)
+   🔥 SMART SYSTEM PROMPT (MATCHES CONTROLLER)
 ========================================= */
 
 const systemPrompt = {
   role: "system",
   content: `
-You are a professional academic planner.
+You are a helpful academic assistant like ChatGPT.
 
-Your job is to generate a CLEAN and SIMPLE study plan.
-
-STRICT RULES:
-
-- NO markdown (no ###, no **, no symbols)
-- NO long explanations
-- NO paragraphs
-- NO extra text
-- ONLY clean structured output
-
-FORMAT STRICTLY:
-
-Study Planner
-
-Total Time: X hours
-
-1. Subject - 05:00 PM - 60 minutes
-2. Break - 06:00 PM - 15 minutes
-3. Subject - 06:15 PM - 60 minutes
-4. Break - 07:15 PM - 15 minutes
-5. Subject - 07:30 PM - 60 minutes
-
-Tips:
-- Stay consistent
-- Take proper breaks
+Your responses should feel natural, friendly, and useful.
 
 IMPORTANT:
-- Keep output professional and minimal
-- Do not add anything extra
+
+- Explain clearly (like a mentor)
+- Give structured sections
+- Be practical (not generic)
+- Use light emojis for clarity
+- Keep it readable (not too long, not too short)
+
+ALSO IMPORTANT:
+
+At the END of your response, ALWAYS include a clean time-based study timeline in this format:
+
+Subject - 05:00 PM - 60 minutes
+Break - 06:00 PM - 15 minutes
+Subject - 06:15 PM - 60 minutes
+
+RULES FOR TIMELINE:
+- 4–6 sessions
+- Break after each study
+- Start from given time
+- Keep realistic
+
+Do NOT skip the timeline.
 `
 };
 
 /* =========================================
-   FALLBACK (CLEAN FORMAT)
+   FALLBACK (SMART + COMPATIBLE)
 ========================================= */
 
 const fallbackPlanner = () => {
@@ -89,19 +85,21 @@ const fallbackPlanner = () => {
   };
 
   return `
-Study Planner
+📅 Daily Planner
 
-Total Time: ~3 hours
+Start with your most important subject first, then rotate to avoid fatigue.
 
-1. ${make("Study", 60)}
-2. ${make("Break", 15)}
-3. ${make("Study", 60)}
-4. ${make("Break", 15)}
-5. ${make("Revision", 45)}
+⏱ Total Time: ~3 hours
 
-Tips:
-- Stay focused
-- Avoid distractions
+Focus on consistency rather than perfection.
+
+Timeline:
+
+${make("Study", 60)}
+${make("Break", 15)}
+${make("Study", 60)}
+${make("Break", 15)}
+${make("Revision", 45)}
 `;
 };
 
@@ -128,7 +126,7 @@ export const askAI = async (messages) => {
 
     const timePrompt = {
       role: "system",
-      content: `Current time is ${currentTime}. Start plan from this exact time.`
+      content: `Current time is ${currentTime}. Start the timeline from this time.`
     };
 
     /* ✅ FINAL MESSAGE STACK */
@@ -151,8 +149,8 @@ export const askAI = async (messages) => {
           {
             model: DEFAULT_MODEL,
             messages: safeMessages,
-            temperature: 0.5, // 🔥 more deterministic
-            max_tokens: 800   // 🔥 prevents long paragraphs
+            temperature: 0.8,   // 🔥 more creative like ChatGPT
+            max_tokens: 1500    // 🔥 allows full structured response
           },
           {
             headers: {

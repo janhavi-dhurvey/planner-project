@@ -15,8 +15,11 @@ const Chatbot = () => {
   const [sessions, setSessions] = useState([]);
   const [userName, setUserName] = useState("User");
 
-  const scrollContainerRef = useRef(null);
+  const scrollRef = useRef(null);
 
+  /* =========================================
+     INIT
+  ========================================= */
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -30,11 +33,8 @@ const Chatbot = () => {
 
   const loadUser = () => {
     try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        setUserName(parsed?.name || "User");
-      }
+      const user = JSON.parse(localStorage.getItem("user"));
+      setUserName(user?.name || "User");
     } catch {
       setUserName("User");
     }
@@ -43,25 +43,26 @@ const Chatbot = () => {
   const loadChats = async () => {
     try {
       const res = await API.get("/chat");
-      if (Array.isArray(res.data)) {
-        setSessions(res.data);
-      }
-    } catch (error) {
-      console.error("Chat history error:", error);
+      setSessions(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Chat history error:", err);
     }
   };
 
+  /* =========================================
+     AUTO SCROLL
+  ========================================= */
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop =
-        scrollContainerRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
 
-  /* CLEAN RESPONSE */
+  /* =========================================
+     CLEAN RESPONSE
+  ========================================= */
   const cleanAIResponse = (text) => {
     if (!text) return "";
-
     return text
       .replace(/```[\s\S]*?```/g, "")
       .replace(/#+/g, "")
@@ -70,7 +71,23 @@ const Chatbot = () => {
   };
 
   /* =========================================
-     🔥 UPDATED SEND MESSAGE (FINAL CLEAN)
+     FORMAT MESSAGE (BETTER UI)
+  ========================================= */
+  const formatMessage = (text) => {
+    return text.split("\n").map((line, i) => {
+      if (!line.trim()) return <br key={i} />;
+
+      // Highlight headings
+      if (line.toLowerCase().includes("planner") || line.toLowerCase().includes("tips")) {
+        return <h4 key={i}>{line}</h4>;
+      }
+
+      return <p key={i}>{line}</p>;
+    });
+  };
+
+  /* =========================================
+     SEND MESSAGE (🔥 FIXED)
   ========================================= */
   const sendMessage = async (customInput = null) => {
 
@@ -87,24 +104,36 @@ const Chatbot = () => {
         message: messageToSend
       });
 
-      const reply = res?.data?.reply || "";
+      console.log("API RESPONSE:", res.data);
 
-      /* ✅ ONLY TEXT (NO PLANNER UI) */
+      /* 🔥 VALIDATION */
+      if (!res.data || res.data.error) {
+        throw new Error(res.data?.error || "Invalid response");
+      }
+
+      const reply = cleanAIResponse(res.data.reply);
+
+      if (!reply) {
+        throw new Error("Empty reply from AI");
+      }
+
       setMessages(prev => [
         ...prev,
-        {
-          role: "assistant",
-          text: cleanAIResponse(reply)
-        }
+        { role: "assistant", text: reply }
       ]);
 
       loadChats();
 
-    } catch (error) {
+    } catch (err) {
+
+      console.error("CHAT ERROR:", err);
 
       setMessages(prev => [
         ...prev,
-        { role: "assistant", text: "⚠️ Server error" }
+        {
+          role: "assistant",
+          text: "⚠️ Server issue. Please try again in a moment."
+        }
       ]);
 
     } finally {
@@ -112,6 +141,9 @@ const Chatbot = () => {
     }
   };
 
+  /* =========================================
+     NEW CHAT
+  ========================================= */
   const startNewChat = async () => {
     setMessages([]);
     try {
@@ -120,7 +152,9 @@ const Chatbot = () => {
     } catch {}
   };
 
-  /* 🔥 FIX SESSION LOAD (TEXT ONLY) */
+  /* =========================================
+     OPEN SESSION
+  ========================================= */
   const openSession = (session) => {
     if (!session?.messages) return;
 
@@ -191,11 +225,14 @@ const Chatbot = () => {
 
               <h2 className="system-title">Academic Assistant AI</h2>
 
-              <div className="chat-scroll-window" ref={scrollContainerRef}>
+              <div className="chat-scroll-window" ref={scrollRef}>
 
                 {messages.length === 0 && (
                   <div className="welcome-ui">
-                    <button onClick={() => sendMessage("Create a study plan for today")}>
+                    <h3>👋 Welcome!</h3>
+                    <p>Ask me to create a smart study plan.</p>
+
+                    <button onClick={() => sendMessage("Give me a planner for DSA, Aptitude and CN")}>
                       📅 Create Study Plan
                     </button>
                   </div>
@@ -207,9 +244,7 @@ const Chatbot = () => {
                     className={`msg-row ${msg.role === "user" ? "user" : "bot"}`}
                   >
                     <div className="msg-bubble">
-                      {msg.text?.split("\n").map((line, i) => (
-                        <p key={i} className="chat-line">{line}</p>
-                      ))}
+                      {formatMessage(msg.text)}
                     </div>
                   </div>
                 ))}

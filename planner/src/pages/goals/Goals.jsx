@@ -15,7 +15,7 @@ const Goals = () => {
   const [loading, setLoading] = useState(true);
 
   /* =========================================
-     🔥 LOAD CLEAN + SORTED GOALS
+     LOAD GOALS
   ========================================= */
   const loadGoals = useCallback(async () => {
     try {
@@ -23,7 +23,6 @@ const Goals = () => {
 
       let goalData = Array.isArray(res.data) ? res.data : [];
 
-      /* ✅ SORT PROPERLY */
       goalData.sort((a, b) => {
         if (a.order != null && b.order != null) {
           return a.order - b.order;
@@ -52,14 +51,26 @@ const Goals = () => {
   }, [loadGoals]);
 
   /* =========================================
-     ADD / DELETE / EDIT
+     ADD GOAL (🔥 FIXED)
   ========================================= */
   const handleAddGoal = async (newGoal) => {
     try {
-      await API.post("/goals", newGoal);
+
+      const payload = {
+        title: newGoal.title,
+        time: newGoal.time,
+        duration: Number(newGoal.duration),
+        category: newGoal.category || "📘",
+        color: newGoal.color || "#89CFF0"
+      };
+
+      await API.post("/goals", payload);
+
       await loadGoals();
       setIsFormOpen(false);
-    } catch {
+
+    } catch (err) {
+      console.error(err);
       alert("Failed to add goal");
     }
   };
@@ -105,7 +116,7 @@ const Goals = () => {
   };
 
   /* =========================================
-     ACTIVE GOAL DETECTION
+     ACTIVE GOAL
   ========================================= */
   const getCurrentGoalId = () => {
     const now = new Date();
@@ -165,7 +176,7 @@ const Goals = () => {
                 </div>
               ) : (
 
-                goals.map((goal, index) => {
+                goals.map((goal) => {
 
                   const isActive = goal._id === currentGoalId;
 
@@ -175,16 +186,17 @@ const Goals = () => {
                       className="goal-tab"
                       style={{
                         background: goal.color,
-                        border: isActive ? "3px solid #2ecc71" : "none",
-                        transform: isActive ? "scale(1.02)" : "scale(1)"
+                        border: isActive ? "3px solid #2ecc71" : "none"
                       }}
                       onClick={() => setActiveGoal(goal)}
                     >
 
+                      {/* LEFT ICON */}
                       <div className="goal-icon-circle">
                         {goal.category}
                       </div>
 
+                      {/* CENTER INFO */}
                       <div className="goal-info">
                         <span className="goal-tab-title">
                           {goal.title}
@@ -195,6 +207,7 @@ const Goals = () => {
                         </span>
                       </div>
 
+                      {/* RIGHT ACTIONS */}
                       <div className="goal-actions">
                         <button onClick={(e) => editGoal(goal, e)}>✏</button>
                         <button onClick={(e) => deleteGoal(goal._id, e)}>🗑</button>

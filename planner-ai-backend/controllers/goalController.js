@@ -25,15 +25,14 @@ const normalizeTime = (time) => {
 };
 
 /* =========================================
-   GET GOALS (🔥 FINAL FIX)
+   GET GOALS
 ========================================= */
 export const getGoals = async (req, res) => {
   try {
     const userId = req.userId;
 
-    /* 🔥 SORT DIRECTLY FROM DB */
     const goals = await Goal.find({ userId })
-      .sort({ order: 1 })   // ✅ MOST IMPORTANT LINE
+      .sort({ order: 1, createdAt: 1 })
       .lean();
 
     res.json(goals);
@@ -45,13 +44,19 @@ export const getGoals = async (req, res) => {
 };
 
 /* =========================================
-   CREATE GOAL
+   CREATE GOAL (🔥 FIXED)
 ========================================= */
 export const createGoal = async (req, res) => {
   try {
     const userId = req.userId;
 
-    let { title, time, duration, category, color } = req.body;
+    let {
+      title,
+      time,
+      duration,
+      category,
+      color
+    } = req.body;
 
     if (!title || title.trim() === "") {
       return res.status(400).json({ error: "Goal title required" });
@@ -65,11 +70,8 @@ export const createGoal = async (req, res) => {
 
     time = normalizeTime(time);
 
-    /* 🔥 GET LAST ORDER */
-    const lastGoal = await Goal.findOne({ userId })
-      .sort({ order: -1 });
-
-    const nextOrder = lastGoal ? (lastGoal.order || 0) + 1 : 0;
+    /* 🔥 GET NEXT ORDER SAFELY */
+    const count = await Goal.countDocuments({ userId });
 
     const goal = await Goal.create({
       userId,
@@ -79,7 +81,7 @@ export const createGoal = async (req, res) => {
       category: category || "📘",
       color: color || "#89CFF0",
       status: "pending",
-      order: nextOrder
+      order: count // safer than lastGoal
     });
 
     res.status(201).json(goal);
@@ -146,6 +148,15 @@ export const deleteGoal = async (req, res) => {
 
     await Goal.findByIdAndDelete(goalId);
 
+    /* 🔥 REORDER AFTER DELETE */
+    const remainingGoals = await Goal.find({ userId })
+      .sort({ order: 1 });
+
+    for (let i = 0; i < remainingGoals.length; i++) {
+      remainingGoals[i].order = i;
+      await remainingGoals[i].save();
+    }
+
     res.json({ message: "Goal deleted" });
 
   } catch (error) {
@@ -169,6 +180,8 @@ export const completeGoal = async (req, res) => {
     }
 
     goal.status = "completed";
+    goal.completedAt = new Date();
+
     await goal.save();
 
     res.json(goal);
@@ -193,5 +206,32 @@ export const resetGoals = async (req, res) => {
   } catch (error) {
     console.error("Reset goals error:", error);
     res.status(500).json({ error: "Failed to reset goals" });
+  }
+};
+
+/* =========================================
+   🔥 REORDER GOALS (VERY IMPORTANT)
+========================================= */
+export const reorderGoals = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { orderedIds } = req.body;
+
+    if (!Array.isArray(orderedIds)) {
+      return res.status(400).json({ error: "Invalid order data" });
+    }
+
+    for (let i = 0; i < orderedIds.length; i++) {
+      await Goal.findOneAndUpdate(
+        { _id: orderedIds[i], userId },
+        { order: i }
+      );
+    }
+
+    res.json({ message: "Goals reordered successfully" });
+
+  } catch (error) {
+    console.error("Reorder error:", error);
+    res.status(500).json({ error: "Failed to reorder goals" });
   }
 };

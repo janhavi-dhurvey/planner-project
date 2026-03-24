@@ -17,7 +17,8 @@ const GoalSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 120
+      maxlength: 120,
+      default: "Untitled Task"
     },
 
     /* =========================================
@@ -64,7 +65,7 @@ const GoalSchema = new mongoose.Schema(
     },
 
     /* =========================================
-       🔥 ORDER (CRITICAL FIX)
+       ORDER (IMPORTANT)
     ========================================= */
 
     order: {
@@ -88,27 +89,10 @@ const GoalSchema = new mongoose.Schema(
 );
 
 /* =========================================
-   PRE-SAVE HOOK
+   INDEXES
 ========================================= */
 
-GoalSchema.pre("save", function (next) {
-
-  if (!this.duration || this.duration < 5) {
-    this.duration = 60;
-  }
-
-  if (!this.title) {
-    this.title = "Untitled Task";
-  }
-
-  next();
-});
-
-/* =========================================
-   INDEXES (UPDATED)
-========================================= */
-
-GoalSchema.index({ userId: 1, order: 1 });   // 🔥 IMPORTANT
+GoalSchema.index({ userId: 1, order: 1 });
 GoalSchema.index({ userId: 1, createdAt: -1 });
 GoalSchema.index({ userId: 1, time: 1 });
 GoalSchema.index({ userId: 1, status: 1 });

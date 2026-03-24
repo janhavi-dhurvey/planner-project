@@ -2,20 +2,6 @@ import Chat from "../models/Chat.js";
 import Goal from "../models/Goal.js";
 import { askAI } from "../services/aiService.js";
 
-const userChats = {};
-
-/* =========================================
-   SUBJECT EXTRACTION
-========================================= */
-const extractSubjects = (text) => {
-  return text
-    .toLowerCase()
-    .replace(/give me|plan|planner|schedule|for/g, "")
-    .split(/,|and|\s+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 2);
-};
-
 /* =========================================
    FORMAT TIME
 ========================================= */
@@ -36,93 +22,90 @@ const isPlannerRequest = (text) => {
 };
 
 /* =========================================
-   🔥 CLEAN SYSTEM PROMPT (STRICT FORMAT)
+   🔥 SIMPLE + STABLE PROMPT
 ========================================= */
-const buildSystemPrompt = (subjects = []) => {
+const buildPrompt = (message) => {
 
   const currentTime = formatTime(new Date());
 
-  return {
-    role: "system",
-    content: `
-You are an academic planner AI.
+  return [
+    {
+      role: "system",
+      content: `
+You are a smart academic planner.
 
-Generate a clean and professional study plan.
+Give a clean, helpful response like ChatGPT.
 
-STRICT RULES:
+First explain briefly how to study.
 
-- NO markdown (no ###, no **, no symbols)
-- NO long explanations
-- NO paragraphs
-- ONLY structured clean output
+Then give a structured plan.
 
-FORMAT:
+At the end, give a simple timeline in this exact format:
 
-Study Planner
+Subject - 05:00 PM - 60 minutes
+Break - 06:00 PM - 15 minutes
 
-Total Time: X hours
+Start from ${currentTime}.
 
-1. Subject - ${currentTime} - 60 minutes
-2. Break - time - 15 minutes
-3. Subject - time - 60 minutes
-
-Rules:
-- 4 to 6 sessions only
-- Break after each session
-- Keep it realistic
-
-Subjects: ${subjects.join(", ") || "General Study"}
+Do NOT use ### or markdown.
+Keep it clean and readable.
 `
-  };
+    },
+    {
+      role: "user",
+      content: message
+    }
+  ];
 };
 
 /* =========================================
-   EXTRACT GOALS
+   SAFE GOAL EXTRACTION (🔥 FIXED)
 ========================================= */
 const extractGoals = (reply) => {
+
   try {
 
     const lines = reply.split("\n");
-
     const goals = [];
 
     lines.forEach(line => {
+
       const match = line.match(
-        /(.*?)-\s*(\d{1,2}:\d{2}\s?[APMapm]{2})\s*-\s*(\d+)/
+        /(.*?)-\s*(\d{1,2}:\d{2}\s?(AM|PM))\s*-\s*(\d+)/
       );
 
       if (match) {
         goals.push({
           title: match[1].trim(),
-          time: match[2].toUpperCase(),
-          duration: Number(match[3]),
+          time: match[2],
+          duration: Number(match[4]) || 60,
           category: match[1].toLowerCase().includes("break") ? "☕" : "📘",
           color: match[1].toLowerCase().includes("break") ? "#FFD93D" : "#89CFF0"
         });
       }
+
     });
 
-    return goals.length ? goals : null;
+    return goals.length ? goals : [];
 
   } catch (err) {
-    console.error("Parse error:", err.message);
-    return null;
+    console.error("Goal parse error:", err.message);
+    return [];
   }
 };
 
 /* =========================================
-   CLEAN RESPONSE (REMOVE GARBAGE)
+   CLEAN RESPONSE
 ========================================= */
 const cleanReply = (reply) => {
   return reply
     .replace(/```[\s\S]*?```/g, "")
-    .replace(/#+/g, "")
     .replace(/\*\*/g, "")
     .trim();
 };
 
 /* =========================================
-   SEND MESSAGE (🔥 FINAL CLEAN VERSION)
+   SEND MESSAGE
 ========================================= */
 export const sendMessage = async (req, res) => {
 
@@ -135,23 +118,23 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ error: "Message required" });
     }
 
-    const subjects = extractSubjects(message);
+    /* 🔥 CALL AI */
+    const reply = await askAI(buildPrompt(message));
 
-    userChats[userId] = [buildSystemPrompt(subjects)];
-    const chatHistory = userChats[userId];
-
-    chatHistory.push({ role: "user", content: message });
-
-    const reply = await askAI(chatHistory);
-
-    /* 🔥 ONLY EXTRACT GOALS IF NEEDED */
-    let goals = null;
-
-    if (isPlannerRequest(message)) {
-      goals = extractGoals(reply);
+    if (!reply) {
+      return res.status(500).json({ error: "No AI response" });
     }
 
-    /* ✅ SAVE CHAT */
+    const cleanedReply = cleanReply(reply);
+
+    /* 🔥 EXTRACT GOALS SAFELY */
+    let goals = [];
+
+    if (isPlannerRequest(message)) {
+      goals = extractGoals(cleanedReply);
+    }
+
+    /* SAVE CHAT */
     try {
       await Chat.create({
         userId,
@@ -160,8 +143,8 @@ export const sendMessage = async (req, res) => {
           { role: "user", content: message },
           {
             role: "assistant",
-            content: cleanReply(reply),
-            structuredData: Array.isArray(goals) ? goals : []
+            content: cleanedReply,
+            structuredData: goals
           }
         ]
       });
@@ -169,19 +152,19 @@ export const sendMessage = async (req, res) => {
       console.error("Chat save error:", err.message);
     }
 
-    /* ✅ SAVE GOALS (ONLY FOR PLANNER) */
-    if (Array.isArray(goals) && goals.length > 0) {
+    /* SAVE GOALS */
+    if (goals.length > 0) {
       try {
 
         await Goal.deleteMany({ userId });
 
         const safeGoals = goals.map((g, index) => ({
           userId,
-          title: g.title || "Study",
-          time: g.time || "",
-          duration: g.duration || 60,
-          category: g.category || "📘",
-          color: g.color || "#89CFF0",
+          title: g.title,
+          time: g.time,
+          duration: g.duration,
+          category: g.category,
+          color: g.color,
           status: "pending",
           order: index
         }));
@@ -195,17 +178,16 @@ export const sendMessage = async (req, res) => {
       }
     }
 
-    /* 🔥 IMPORTANT: DO NOT SEND GOALS TO FRONTEND */
-    res.json({
-      reply: cleanReply(reply)
+    return res.json({
+      reply: cleanedReply
     });
 
   } catch (err) {
 
-    console.error("🔥 CHAT ERROR:", err);
+    console.error("🔥 CHAT ERROR:", err.message);
 
-    res.status(500).json({
-      error: "AI server error"
+    return res.status(500).json({
+      error: "Something went wrong"
     });
   }
 };
@@ -231,7 +213,6 @@ export const getChats = async (req, res) => {
 ========================================= */
 export const resetChat = async (req, res) => {
   try {
-    userChats[req.userId] = [];
     res.json({ message: "Chat reset" });
   } catch (err) {
     console.error("Reset error:", err.message);
