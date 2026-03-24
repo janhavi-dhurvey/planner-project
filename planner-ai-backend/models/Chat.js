@@ -21,7 +21,7 @@ const MessageSchema = new mongoose.Schema(
     /* ✅ SAFE STRUCTURED DATA */
     structuredData: {
       type: [mongoose.Schema.Types.Mixed],
-      default: [] // always safe array
+      default: undefined
     }
   },
   { _id: false }
@@ -68,6 +68,41 @@ const ChatSchema = new mongoose.Schema(
 
 ChatSchema.index({ userId: 1, createdAt: -1 });
 ChatSchema.index({ userId: 1, lastMessageAt: -1 });
+
+/* =========================================
+   🔥 SAFE PRE-SAVE HOOK (FIXED)
+========================================= */
+
+ChatSchema.pre("save", function (next) {
+  try {
+
+    if (!Array.isArray(this.messages)) {
+      this.messages = [];
+    }
+
+    this.messages = this.messages.map(msg => ({
+      role: msg.role || "assistant",
+      content: msg.content || "",
+      structuredData: Array.isArray(msg.structuredData)
+        ? msg.structuredData
+        : undefined
+    }));
+
+    this.lastMessageAt = new Date();
+
+    // ✅ FIX: handle both cases safely
+    if (typeof next === "function") {
+      next();
+    }
+
+  } catch (err) {
+    console.error("Chat schema error:", err.message);
+
+    if (typeof next === "function") {
+      next();
+    }
+  }
+});
 
 /* =========================================
    EXPORT MODEL

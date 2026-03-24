@@ -26,7 +26,7 @@ const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /* =========================================
-   🔥 SMART SYSTEM PROMPT (MATCHES CONTROLLER)
+   🔥 SMART SYSTEM PROMPT (UPDATED MINIMALLY)
 ========================================= */
 
 const systemPrompt = {
@@ -46,11 +46,17 @@ IMPORTANT:
 
 ALSO IMPORTANT:
 
-At the END of your response, ALWAYS include a clean time-based study timeline in this format:
+At the END of your response, ALWAYS include a clean time-based study timeline.
 
-Subject - 05:00 PM - 60 minutes
+⚠️ CRITICAL RULE:
+- NEVER use the word "Subject"
+- ALWAYS use REAL subject names from the user input (e.g., Python, DSA, Java, ML)
+
+FORMAT:
+
+Python - 05:00 PM - 60 minutes
 Break - 06:00 PM - 15 minutes
-Subject - 06:15 PM - 60 minutes
+Java - 06:15 PM - 60 minutes
 
 RULES FOR TIMELINE:
 - 4–6 sessions
@@ -63,7 +69,7 @@ Do NOT skip the timeline.
 };
 
 /* =========================================
-   FALLBACK (SMART + COMPATIBLE)
+   FALLBACK (UNCHANGED)
 ========================================= */
 
 const fallbackPlanner = () => {
@@ -149,8 +155,8 @@ export const askAI = async (messages) => {
           {
             model: DEFAULT_MODEL,
             messages: safeMessages,
-            temperature: 0.8,   // 🔥 more creative like ChatGPT
-            max_tokens: 1500    // 🔥 allows full structured response
+            temperature: 0.8,
+            max_tokens: 1500
           },
           {
             headers: {

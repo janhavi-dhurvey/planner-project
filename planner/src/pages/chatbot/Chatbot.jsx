@@ -16,11 +16,15 @@ const Chatbot = () => {
   const [userName, setUserName] = useState("User");
 
   const scrollRef = useRef(null);
+  const hasLoaded = useRef(false); // ✅ prevent double API calls
 
   /* =========================================
-     INIT
+     INIT (SAFE)
   ========================================= */
   useEffect(() => {
+    if (hasLoaded.current) return; // ✅ prevents double execution
+    hasLoaded.current = true;
+
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
@@ -71,14 +75,16 @@ const Chatbot = () => {
   };
 
   /* =========================================
-     FORMAT MESSAGE (BETTER UI)
+     FORMAT MESSAGE
   ========================================= */
   const formatMessage = (text) => {
     return text.split("\n").map((line, i) => {
       if (!line.trim()) return <br key={i} />;
 
-      // Highlight headings
-      if (line.toLowerCase().includes("planner") || line.toLowerCase().includes("tips")) {
+      if (
+        line.toLowerCase().includes("planner") ||
+        line.toLowerCase().includes("tips")
+      ) {
         return <h4 key={i}>{line}</h4>;
       }
 
@@ -87,7 +93,7 @@ const Chatbot = () => {
   };
 
   /* =========================================
-     SEND MESSAGE (🔥 FIXED)
+     SEND MESSAGE (SAFE + STABLE)
   ========================================= */
   const sendMessage = async (customInput = null) => {
 
@@ -104,18 +110,14 @@ const Chatbot = () => {
         message: messageToSend
       });
 
-      console.log("API RESPONSE:", res.data);
+      /* ✅ extra safety */
+      const replyRaw = res?.data?.reply;
 
-      /* 🔥 VALIDATION */
-      if (!res.data || res.data.error) {
-        throw new Error(res.data?.error || "Invalid response");
+      if (!replyRaw || typeof replyRaw !== "string") {
+        throw new Error("Invalid AI response");
       }
 
-      const reply = cleanAIResponse(res.data.reply);
-
-      if (!reply) {
-        throw new Error("Empty reply from AI");
-      }
+      const reply = cleanAIResponse(replyRaw);
 
       setMessages(prev => [
         ...prev,
@@ -132,7 +134,7 @@ const Chatbot = () => {
         ...prev,
         {
           role: "assistant",
-          text: "⚠️ Server issue. Please try again in a moment."
+          text: "⚠️ Something went wrong. Please try again."
         }
       ]);
 
@@ -232,7 +234,11 @@ const Chatbot = () => {
                     <h3>👋 Welcome!</h3>
                     <p>Ask me to create a smart study plan.</p>
 
-                    <button onClick={() => sendMessage("Give me a planner for DSA, Aptitude and CN")}>
+                    <button
+                      onClick={() =>
+                        sendMessage("Give me a planner for DSA, Aptitude and CN")
+                      }
+                    >
                       📅 Create Study Plan
                     </button>
                   </div>
@@ -268,11 +274,13 @@ const Chatbot = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
+                  disabled={loading}   // ✅ UX improvement
                 />
 
                 <button
                   className="send-btn"
                   onClick={() => sendMessage()}
+                  disabled={loading}   // ✅ prevents spam
                 >
                   ➤
                 </button>

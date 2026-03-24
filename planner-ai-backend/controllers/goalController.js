@@ -1,10 +1,11 @@
 import Goal from "../models/Goal.js";
 
 /* =========================================
-   NORMALIZE TIME
+   NORMALIZE TIME (SAFE FIX)
 ========================================= */
 const normalizeTime = (time) => {
-  if (!time) return "";
+
+  if (!time || typeof time !== "string") return "";
 
   if (time.includes("AM") || time.includes("PM")) {
     return time;
@@ -15,6 +16,8 @@ const normalizeTime = (time) => {
 
   let hour = parseInt(parts[0]);
   const minute = parts[1];
+
+  if (isNaN(hour)) return time;
 
   const ampm = hour >= 12 ? "PM" : "AM";
 
@@ -44,7 +47,7 @@ export const getGoals = async (req, res) => {
 };
 
 /* =========================================
-   CREATE GOAL (🔥 FIXED)
+   CREATE GOAL
 ========================================= */
 export const createGoal = async (req, res) => {
   try {
@@ -70,7 +73,6 @@ export const createGoal = async (req, res) => {
 
     time = normalizeTime(time);
 
-    /* 🔥 GET NEXT ORDER SAFELY */
     const count = await Goal.countDocuments({ userId });
 
     const goal = await Goal.create({
@@ -81,7 +83,7 @@ export const createGoal = async (req, res) => {
       category: category || "📘",
       color: color || "#89CFF0",
       status: "pending",
-      order: count // safer than lastGoal
+      order: count
     });
 
     res.status(201).json(goal);
@@ -210,7 +212,7 @@ export const resetGoals = async (req, res) => {
 };
 
 /* =========================================
-   🔥 REORDER GOALS (VERY IMPORTANT)
+   REORDER GOALS
 ========================================= */
 export const reorderGoals = async (req, res) => {
   try {

@@ -9,6 +9,8 @@ const GoalForm = ({ onSave, onCancel }) => {
   const [category, setCategory] = useState("📘");
   const [color, setColor] = useState("#89CFF0");
 
+  const [period, setPeriod] = useState("AM"); // ✅ NEW (AM/PM)
+
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -31,10 +33,13 @@ const GoalForm = ({ onSave, onCancel }) => {
     const [h, m] = time.split(":");
     let hour = parseInt(h);
 
-    const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 || 12;
+    // ✅ APPLY USER-SELECTED AM/PM
+    if (period === "PM" && hour < 12) hour += 12;
+    if (period === "AM" && hour === 12) hour = 0;
 
-    return `${hour}:${m} ${ampm}`;
+    const displayHour = hour % 12 || 12;
+
+    return `${displayHour}:${m} ${period}`;
   };
 
   /* ================= SAVE ================= */
@@ -71,6 +76,7 @@ const GoalForm = ({ onSave, onCancel }) => {
       setTitle("");
       setStartTime("");
       setDuration(60);
+      setPeriod("AM"); // reset
       setError("");
 
     } catch {
@@ -106,6 +112,31 @@ const GoalForm = ({ onSave, onCancel }) => {
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
         />
+
+        {/* ✅ AM / PM SELECT (MINIMAL UI) */}
+        <div style={{ marginTop: "6px", fontSize: "13px" }}>
+          <label style={{ marginRight: "12px", cursor: "pointer" }}>
+            <input
+              type="radio"
+              value="AM"
+              checked={period === "AM"}
+              onChange={() => setPeriod("AM")}
+              style={{ marginRight: "4px" }}
+            />
+            AM
+          </label>
+
+          <label style={{ cursor: "pointer" }}>
+            <input
+              type="radio"
+              value="PM"
+              checked={period === "PM"}
+              onChange={() => setPeriod("PM")}
+              style={{ marginRight: "4px" }}
+            />
+            PM
+          </label>
+        </div>
       </div>
 
       {/* DURATION */}

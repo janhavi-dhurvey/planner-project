@@ -14,7 +14,22 @@ const Goals = () => {
   const [activeGoal, setActiveGoal] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ================= LOAD GOALS ================= */
+  const parseTime = (timeStr) => {
+    if (!timeStr) return 0;
+
+    try {
+      const [time, period] = timeStr.split(" ");
+      let [hour, minute] = time.split(":").map(Number);
+
+      if (period === "PM" && hour < 12) hour += 12;
+      if (period === "AM" && hour === 12) hour = 0;
+
+      return hour * 60 + minute;
+    } catch {
+      return 0;
+    }
+  };
+
   const loadGoals = useCallback(async () => {
     try {
       const res = await API.get("/goals");
@@ -25,7 +40,7 @@ const Goals = () => {
         if (a.order != null && b.order != null) {
           return a.order - b.order;
         }
-        return new Date(`1970 ${a.time}`) - new Date(`1970 ${b.time}`);
+        return parseTime(a.time) - parseTime(b.time);
       });
 
       setGoals(goalData);
@@ -42,7 +57,6 @@ const Goals = () => {
     loadGoals();
   }, [loadGoals]);
 
-  /* ================= ADD GOAL ================= */
   const handleAddGoal = async (newGoal) => {
     try {
       await API.post("/goals", {
@@ -119,14 +133,35 @@ const Goals = () => {
           )}
 
           {activeGoal ? (
-            <GoalTimer
-              goal={activeGoal}
-              onBack={() => setActiveGoal(null)}
-            />
+            <div className="goal-timer-wrapper">
+
+              {/* ❌ REMOVED EXTRA BACK BUTTON */}
+
+              <GoalTimer
+                goal={activeGoal}
+                onBack={() => setActiveGoal(null)}
+              />
+
+            </div>
           ) : isFormOpen ? (
 
-            /* 🔥 THIS IS WHERE FIX HAPPENS */
             <div className="goal-form-wrapper">
+
+              <button
+                style={{
+                  marginBottom: "15px",
+                  background: "#6c7543",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  cursor: "pointer"
+                }}
+                onClick={() => setIsFormOpen(false)}
+              >
+                ← Back
+              </button>
+
               <GoalForm
                 onSave={handleAddGoal}
                 onCancel={() => setIsFormOpen(false)}

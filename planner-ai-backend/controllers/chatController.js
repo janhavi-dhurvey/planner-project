@@ -22,7 +22,22 @@ const isPlannerRequest = (text) => {
 };
 
 /* =========================================
-   🔥 SIMPLE + STABLE PROMPT
+   🔥 EXTRACT SUBJECTS FROM USER INPUT (NEW)
+========================================= */
+const extractSubjects = (message) => {
+  const words = message
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(" ");
+
+  // remove common words
+  const ignore = ["give", "me", "a", "planner", "for", "and", "plan"];
+
+  return words.filter(w => w && !ignore.includes(w));
+};
+
+/* =========================================
+   PROMPT (UNCHANGED)
 ========================================= */
 const buildPrompt = (message) => {
 
@@ -59,14 +74,15 @@ Keep it clean and readable.
 };
 
 /* =========================================
-   SAFE GOAL EXTRACTION (🔥 FIXED)
+   GOAL EXTRACTION (FIXED)
 ========================================= */
-const extractGoals = (reply) => {
+const extractGoals = (reply, subjects = []) => {
 
   try {
 
     const lines = reply.split("\n");
     const goals = [];
+    let subjectIndex = 0;
 
     lines.forEach(line => {
 
@@ -75,12 +91,24 @@ const extractGoals = (reply) => {
       );
 
       if (match) {
+
+        let title = match[1].trim();
+
+        /* 🔥 FIX: replace "Subject" with real subject */
+        if (
+          title.toLowerCase() === "subject" &&
+          subjects.length > 0
+        ) {
+          title = subjects[subjectIndex % subjects.length];
+          subjectIndex++;
+        }
+
         goals.push({
-          title: match[1].trim(),
-          time: match[2],
+          title,
+          time: match[2].trim(),
           duration: Number(match[4]) || 60,
-          category: match[1].toLowerCase().includes("break") ? "☕" : "📘",
-          color: match[1].toLowerCase().includes("break") ? "#FFD93D" : "#89CFF0"
+          category: title.toLowerCase().includes("break") ? "☕" : "📘",
+          color: title.toLowerCase().includes("break") ? "#FFD93D" : "#89CFF0"
         });
       }
 
@@ -98,6 +126,7 @@ const extractGoals = (reply) => {
    CLEAN RESPONSE
 ========================================= */
 const cleanReply = (reply) => {
+  if (!reply || typeof reply !== "string") return "";
   return reply
     .replace(/```[\s\S]*?```/g, "")
     .replace(/\*\*/g, "")
@@ -121,20 +150,24 @@ export const sendMessage = async (req, res) => {
     /* 🔥 CALL AI */
     const reply = await askAI(buildPrompt(message));
 
-    if (!reply) {
+    if (!reply || typeof reply !== "string") {
+      console.error("Invalid AI reply");
       return res.status(500).json({ error: "No AI response" });
     }
 
     const cleanedReply = cleanReply(reply);
 
-    /* 🔥 EXTRACT GOALS SAFELY */
+    /* 🔥 EXTRACT SUBJECTS */
+    const subjects = extractSubjects(message);
+
+    /* 🔥 EXTRACT GOALS */
     let goals = [];
 
     if (isPlannerRequest(message)) {
-      goals = extractGoals(cleanedReply);
+      goals = extractGoals(cleanedReply, subjects); // ✅ updated
     }
 
-    /* SAVE CHAT */
+    /* SAVE CHAT (SAFE) */
     try {
       await Chat.create({
         userId,
