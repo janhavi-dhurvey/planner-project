@@ -132,7 +132,6 @@ const GoalTimer = ({ goal, onBack }) => {
       style={{ backgroundColor: goal?.color || "#888" }}
     >
 
-      {/* ✅ CLEAN BACK BUTTON */}
       <button className="back-btn-clean" onClick={terminateGoal}>
         ← Back
       </button>
@@ -141,14 +140,14 @@ const GoalTimer = ({ goal, onBack }) => {
 
         <h2 className="timer-goal-title">{goal?.title}</h2>
 
-        {/* ✅ CENTERED CIRCLE */}
+        {/* ✅ FIXED CIRCLE ALIGNMENT */}
         <div className="timer-circle-wrapper">
 
-          <svg width="240" height="240">
+          <svg width="260" height="260"> {/* MATCHED WITH CSS */}
 
             <circle
-              cx="120"
-              cy="120"
+              cx="130"
+              cy="130"
               r={radius}
               stroke="#ffffff40"
               strokeWidth="10"
@@ -156,8 +155,8 @@ const GoalTimer = ({ goal, onBack }) => {
             />
 
             <circle
-              cx="120"
-              cy="120"
+              cx="130"
+              cy="130"
               r={radius}
               stroke="#ffffff"
               strokeWidth="10"
@@ -165,7 +164,7 @@ const GoalTimer = ({ goal, onBack }) => {
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              transform="rotate(-90 120 120)"
+              transform="rotate(-90 130 130)"
               style={{ transition: "stroke-dashoffset 0.5s ease" }}
             />
 
@@ -202,7 +201,6 @@ const GoalTimer = ({ goal, onBack }) => {
 
         </div>
 
-        {/* ✅ CLEAN STATS */}
         <div className="timer-footer-stats">
           <div className="stat-box">
             <span>Goal Duration</span>
@@ -217,7 +215,6 @@ const GoalTimer = ({ goal, onBack }) => {
           </div>
         </div>
 
-        {/* ✅ BUTTONS CLEAN */}
         <div className="timer-buttons">
           <button onClick={startBreak}>Start Break</button>
           <button onClick={resetTimer}>Reset Timer</button>
