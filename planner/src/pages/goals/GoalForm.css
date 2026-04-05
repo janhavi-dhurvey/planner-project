@@ -1,0 +1,151 @@
+/* =========================================
+   GOAL FORM CONTAINER
+========================================= */
+
+.goal-form-old{
+  width:100%;
+  max-width:600px;
+  padding:10px 5px 20px 5px;
+}
+
+/* =========================================
+   TITLE + ERROR
+========================================= */
+
+.goal-form-title{
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:15px;
+}
+
+.goal-error{
+  color:#ff4d4f;
+  font-size:14px;
+  margin-bottom:10px;
+}
+
+/* =========================================
+   INPUT GROUP
+========================================= */
+
+.goal-input-group{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:16px;
+}
+
+.goal-input-group label{
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.goal-input-group input{
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
+  transition:0.2s ease;
+  background:white;
+}
+
+.goal-input-group input:focus{
+  border-color:#6c7543;
+  outline:none;
+  box-shadow:0 0 0 2px rgba(108,117,67,0.15);
+}
+
+/* =========================================
+   CATEGORY ICONS
+========================================= */
+
+.category-icons{
+  display:flex;
+  gap:12px;
+  margin-top:6px;
+  flex-wrap:wrap;
+}
+
+.category-icons span{
+  cursor:pointer;
+  font-size:20px;
+  padding:6px;
+  border-radius:8px;
+  transition:0.2s ease;
+}
+
+.category-icons span:hover{
+  background:#e0e0e0;
+}
+
+.active-icon{
+  background:#6c7543;
+  color:white;
+}
+
+/* =========================================
+   COLOR OPTIONS
+========================================= */
+
+.color-options{
+  display:flex;
+  gap:10px;
+  margin-top:6px;
+  flex-wrap:wrap;
+}
+
+.color-circle{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:0.2s ease;
+}
+
+.color-circle:hover{
+  transform:scale(1.1);
+}
+
+.active-color{
+  border:2px solid #222;
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.goal-form-actions{
+  display:flex;
+  gap:12px;
+  margin-top:20px;
+}
+
+.goal-save{
+  background:#6c7543;
+  color:white;
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:0.2s ease;
+}
+
+.goal-save:hover{
+  background:#5b6336;
+}
+
+.goal-cancel{
+  background:#e0e0e0;
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:600;
+  transition:0.2s ease;
+}
+
+.goal-cancel:hover{
+  background:#d5d5d5;
+}

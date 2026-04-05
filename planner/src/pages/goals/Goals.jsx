@@ -118,15 +118,19 @@ const Goals = () => {
 
       <div className="goals-container">
 
-        {/* LEFT */}
         <div className="left-panel">
           <div className="planner-box">
             <p>AI Planner</p>
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="right-panel">
+        <div
+          className={`right-panel ${!activeGoal && !isFormOpen ? "scroll-enabled" : ""}`}
+          style={{
+            overflowY: "auto",
+            maxHeight: "calc(100vh - 80px)"
+          }}
+        >
 
           {!activeGoal && !isFormOpen && (
             <ProductivityDashboard goals={goals} />
@@ -134,14 +138,10 @@ const Goals = () => {
 
           {activeGoal ? (
             <div className="goal-timer-wrapper">
-
-              {/* ❌ REMOVED EXTRA BACK BUTTON */}
-
               <GoalTimer
                 goal={activeGoal}
                 onBack={() => setActiveGoal(null)}
               />
-
             </div>
           ) : isFormOpen ? (
 

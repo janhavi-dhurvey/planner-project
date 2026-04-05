@@ -44,8 +44,11 @@
 html,
 body{
   width:100%;
-  height:100%; /* ✅ FIX */
-  overflow:hidden; /* ✅ PREVENT PAGE SCROLL */
+  height:100%;
+
+  /* ✅ FIXED */
+  overflow-y:auto;
+  overflow-x:hidden;
 
   font-family:
   "Inter",
@@ -77,10 +80,12 @@ body{
 
 #root{
   width:100%;
-  height:100%; /* ✅ IMPORTANT */
+  height:100%;
   display:flex;
   flex-direction:column;
-  overflow:hidden; /* ✅ PREVENT BREAKOUT */
+
+  /* ✅ FIXED */
+  overflow-y:auto;
 }
 
 /* =========================================

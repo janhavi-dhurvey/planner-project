@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./Goals.css";
+import "./GoalForm.css"; // ✅ FIXED
 
 const GoalForm = ({ onSave, onCancel }) => {
 
@@ -9,7 +9,7 @@ const GoalForm = ({ onSave, onCancel }) => {
   const [category, setCategory] = useState("📘");
   const [color, setColor] = useState("#89CFF0");
 
-  const [period, setPeriod] = useState("AM"); // ✅ NEW (AM/PM)
+  const [period, setPeriod] = useState("AM");
 
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -17,23 +17,16 @@ const GoalForm = ({ onSave, onCancel }) => {
   const categories = ["📘","✏️","🎧","💻","🎯","🏃‍♀️","🔍"];
 
   const colors = [
-    "#C5B4E3",
-    "#FF6B6B",
-    "#FFD93D",
-    "#F6C177",
-    "#A8E063",
-    "#9ECae1",
-    "#8E7DBE"
+    "#C5B4E3","#FF6B6B","#FFD93D",
+    "#F6C177","#A8E063","#9ECae1","#8E7DBE"
   ];
 
-  /* ================= FORMAT TIME ================= */
   const formatTime = (time) => {
     if (!time) return "";
 
     const [h, m] = time.split(":");
     let hour = parseInt(h);
 
-    // ✅ APPLY USER-SELECTED AM/PM
     if (period === "PM" && hour < 12) hour += 12;
     if (period === "AM" && hour === 12) hour = 0;
 
@@ -42,25 +35,13 @@ const GoalForm = ({ onSave, onCancel }) => {
     return `${displayHour}:${m} ${period}`;
   };
 
-  /* ================= SAVE ================= */
   const handleSave = async () => {
 
     if (saving) return;
 
-    if (!title.trim()) {
-      setError("Enter a goal title");
-      return;
-    }
-
-    if (!startTime) {
-      setError("Select start time");
-      return;
-    }
-
-    if (duration <= 0) {
-      setError("Invalid duration");
-      return;
-    }
+    if (!title.trim()) return setError("Enter a goal title");
+    if (!startTime) return setError("Select start time");
+    if (duration <= 0) return setError("Invalid duration");
 
     try {
       setSaving(true);
@@ -76,7 +57,7 @@ const GoalForm = ({ onSave, onCancel }) => {
       setTitle("");
       setStartTime("");
       setDuration(60);
-      setPeriod("AM"); // reset
+      setPeriod("AM");
       setError("");
 
     } catch {
@@ -87,13 +68,12 @@ const GoalForm = ({ onSave, onCancel }) => {
   };
 
   return (
-    <div className="goal-form-old">
+    <div className="goal-form-old fade-in">
 
       <h2 className="goal-form-title">+ Add New Goal</h2>
 
       {error && <p className="goal-error">{error}</p>}
 
-      {/* TITLE */}
       <div className="goal-input-group">
         <label>Goal Title</label>
         <input
@@ -104,7 +84,6 @@ const GoalForm = ({ onSave, onCancel }) => {
         />
       </div>
 
-      {/* TIME */}
       <div className="goal-input-group">
         <label>Start Time</label>
         <input
@@ -113,33 +92,25 @@ const GoalForm = ({ onSave, onCancel }) => {
           onChange={(e) => setStartTime(e.target.value)}
         />
 
-        {/* ✅ AM / PM SELECT (MINIMAL UI) */}
         <div style={{ marginTop: "6px", fontSize: "13px" }}>
           <label style={{ marginRight: "12px", cursor: "pointer" }}>
             <input
               type="radio"
-              value="AM"
               checked={period === "AM"}
               onChange={() => setPeriod("AM")}
-              style={{ marginRight: "4px" }}
-            />
-            AM
+            /> AM
           </label>
 
           <label style={{ cursor: "pointer" }}>
             <input
               type="radio"
-              value="PM"
               checked={period === "PM"}
               onChange={() => setPeriod("PM")}
-              style={{ marginRight: "4px" }}
-            />
-            PM
+            /> PM
           </label>
         </div>
       </div>
 
-      {/* DURATION */}
       <div className="goal-input-group">
         <label>Duration (minutes)</label>
         <input
@@ -149,7 +120,6 @@ const GoalForm = ({ onSave, onCancel }) => {
         />
       </div>
 
-      {/* CATEGORY */}
       <div className="goal-input-group">
         <label>Category</label>
         <div className="category-icons">
@@ -165,7 +135,6 @@ const GoalForm = ({ onSave, onCancel }) => {
         </div>
       </div>
 
-      {/* COLOR */}
       <div className="goal-input-group">
         <label>Color</label>
         <div className="color-options">
@@ -180,7 +149,6 @@ const GoalForm = ({ onSave, onCancel }) => {
         </div>
       </div>
 
-      {/* BUTTONS */}
       <div className="goal-form-actions">
         <button className="goal-save" onClick={handleSave}>
           {saving ? "Saving..." : "Save"}

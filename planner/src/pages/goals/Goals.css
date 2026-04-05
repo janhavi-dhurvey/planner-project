@@ -29,7 +29,7 @@
   display:flex;
   flex-direction:column;
   align-items:center;
-  height:520px; /* slightly reduced */
+  height:520px;
   box-shadow:0 10px 25px rgba(0,0,0,0.1);
 }
 
@@ -53,9 +53,12 @@
 .right-panel{
   background:#e7e7e7;
   border-radius:30px;
-  padding:30px; /* reduced slightly */
-  min-height:520px;  /* changed from fixed height */
-  overflow:hidden;   /* removed scroll */
+  padding:30px;
+  min-height:520px;
+
+  overflow-y:auto;
+  max-height:calc(100vh - 120px);
+
   position:relative;
   box-shadow:0 8px 18px rgba(0,0,0,0.08);
 }
@@ -147,6 +150,39 @@
 }
 
 /* =========================================
+   ADD BUTTON (🔥 FINAL FIX)
+========================================= */
+
+.add-goal-btn{
+  position:fixed; /* ✅ FIXED */
+
+  bottom:30px;
+  right:40px;
+
+  width:55px;
+  height:55px;
+
+  border-radius:50%;
+  background:#6c7543;
+  color:white;
+
+  font-size:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  box-shadow:0 6px 15px rgba(0,0,0,0.2);
+  cursor:pointer;
+  transition:0.25s ease;
+
+  z-index:999; /* ✅ ensures it stays above content */
+}
+
+.add-goal-btn:hover{
+  transform:scale(1.1);
+}
+
+/* =========================================
    TIMER UI FIXED
 ========================================= */
 
@@ -154,7 +190,7 @@
   width:100%;
   height:100%;
   border-radius:30px;
-  padding:20px; /* reduced */
+  padding:20px;
   position:relative;
   display:flex;
   flex-direction:column;
@@ -181,15 +217,14 @@
 }
 
 .timer-goal-title{
-  font-size:22px; /* slightly reduced */
+  font-size:22px;
   font-weight:700;
   margin-bottom:15px;
 }
 
-/* ✅ CIRCLE */
 .timer-circle-wrapper{
   position:relative;
-  width:260px;   /* reduced slightly */
+  width:260px;
   height:260px;
   margin:auto;
 }
@@ -200,10 +235,10 @@
   left:50%;
   transform:translate(-50%,-50%);
   
-  display:flex;              /* ✅ fix */
-  flex-direction:column;     /* ✅ fix */
-  align-items:center;        /* ✅ fix */
-  justify-content:center;    /* ✅ fix */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
   
   text-align:center;
   width:100%;
@@ -219,7 +254,6 @@
   margin-top:4px;
 }
 
-/* PLAY BUTTON */
 .play-btn{
   margin-top:10px;
   background:white;
@@ -231,7 +265,6 @@
   font-size:18px;
 }
 
-/* STATS */
 .timer-footer-stats{
   margin-top:20px;
   display:flex;
@@ -250,7 +283,6 @@
   background:#333;
 }
 
-/* BUTTONS */
 .timer-buttons{
   margin-top:20px;
   display:flex;
@@ -260,7 +292,7 @@
 }
 
 .timer-buttons button{
-  width:200px; /* slightly smaller */
+  width:200px;
   padding:9px;
   border-radius:20px;
   border:none;
@@ -300,7 +332,20 @@
   }
 
   .add-goal-btn{
-    right:40px;
+    right:20px;
   }
 
+}
+
+/* =========================================
+   SCROLLBAR STYLE
+========================================= */
+
+.scroll-enabled::-webkit-scrollbar{
+  width:6px;
+}
+
+.scroll-enabled::-webkit-scrollbar-thumb{
+  background:#e8c786;
+  border-radius:10px;
 }

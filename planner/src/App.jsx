@@ -65,8 +65,8 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<LoadingScreen />}>
 
-        {/* ✅ FIX: Full height wrapper */}
-        <div style={{ height: "100vh", overflow: "hidden" }}>
+        {/* ✅ FIXED: removed overflow hidden */}
+        <div style={{ height: "100vh" }}>
 
           <Routes>
 
