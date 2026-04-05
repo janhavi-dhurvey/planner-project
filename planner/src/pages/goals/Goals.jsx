@@ -14,7 +14,9 @@ const Goals = () => {
   const [activeGoal, setActiveGoal] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper to get local YYYY-MM-DD (prevents UTC date shifts)
+  /* =========================================
+      LOCAL DATE HELPER (IST/Local Sync)
+  ========================================= */
   const getLocalDate = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -36,15 +38,18 @@ const Goals = () => {
     }
   };
 
+  /* =========================================
+      LOAD GOALS (With Date Filter)
+  ========================================= */
   const loadGoals = useCallback(async () => {
     try {
-      setLoading(true);
-      // SYNC FIX: Using local date instead of ISO string to match Calendar logic
+      // Logic Sync: Ensure we only fetch for the current local day
       const today = getLocalDate();
       const res = await API.get(`/goals?date=${today}`);
 
       let goalData = Array.isArray(res.data) ? res.data : [];
 
+      // Professional Sorting: Time-based
       goalData.sort((a, b) => {
         if (a.order != null && b.order != null) {
           return a.order - b.order;
@@ -61,8 +66,13 @@ const Goals = () => {
     }
   }, []);
 
+  // Effect to load goals on mount and when window regains focus
   useEffect(() => {
     loadGoals();
+    
+    // Refresh when user returns to this tab (catches AI background updates)
+    window.addEventListener("focus", loadGoals);
+    return () => window.removeEventListener("focus", loadGoals);
   }, [loadGoals]);
 
   const handleAddGoal = async (newGoal) => {
@@ -73,7 +83,6 @@ const Goals = () => {
         duration: Number(newGoal.duration),
         category: newGoal.category || "📘",
         color: newGoal.color || "#89CFF0",
-        // SYNC FIX: Attach local date
         date: getLocalDate() 
       });
 
@@ -122,8 +131,14 @@ const Goals = () => {
       <Navbar />
 
       <div className="goals-container">
+        {/* LEFT PANEL: Professional Deadline Tracker */}
         <div className="left-panel">
-          <div className="planner-box" style={{ padding: "0", overflowY: "auto", background: "#6c7543" }}>
+          <div className="planner-box" style={{ 
+            padding: "0", 
+            overflowY: "auto", 
+            background: "#6c7543", 
+            borderRadius: "24px" 
+          }}>
             <DeadlineSidebar />
           </div>
         </div>
@@ -170,37 +185,39 @@ const Goals = () => {
           ) : (
             <div className="goals-content">
               {loading ? (
-                <div className="empty-state">Loading planner...</div>
+                <div className="empty-state">Loading your daily plan...</div>
               ) : goals.length === 0 ? (
                 <div className="empty-state">
-                  📭 No goals found for today ({getLocalDate()})<br />
-                  <span>Go to Chatbot and create one</span>
+                  📭 No goals for today ({getLocalDate()})<br />
+                  <span>Use the Chatbot to generate your optimized schedule!</span>
                 </div>
               ) : (
-                goals.map((goal) => (
-                  <div
-                    key={goal._id}
-                    className="goal-tab"
-                    style={{ background: goal.color }}
-                    onClick={() => setActiveGoal(goal)}
-                  >
-                    <div className="goal-icon-circle">
-                      {goal.category}
+                <div className="timeline-fade-in">
+                  {goals.map((goal) => (
+                    <div
+                      key={goal._id}
+                      className="goal-tab"
+                      style={{ background: goal.color }}
+                      onClick={() => setActiveGoal(goal)}
+                    >
+                      <div className="goal-icon-circle">
+                        {goal.category}
+                      </div>
+                      <div className="goal-info">
+                        <span className="goal-tab-title">
+                          {goal.title}
+                        </span>
+                        <span className="goal-tab-time">
+                          {goal.time} • {formatDuration(goal.duration)}
+                        </span>
+                      </div>
+                      <div className="goal-actions">
+                        <button onClick={(e) => editGoal(goal, e)}>✏</button>
+                        <button onClick={(e) => deleteGoal(goal._id, e)}>🗑</button>
+                      </div>
                     </div>
-                    <div className="goal-info">
-                      <span className="goal-tab-title">
-                        {goal.title}
-                      </span>
-                      <span className="goal-tab-time">
-                        {goal.time} • {formatDuration(goal.duration)}
-                      </span>
-                    </div>
-                    <div className="goal-actions">
-                      <button onClick={(e) => editGoal(goal, e)}>✏</button>
-                      <button onClick={(e) => deleteGoal(goal._id, e)}>🗑</button>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
 
               <button

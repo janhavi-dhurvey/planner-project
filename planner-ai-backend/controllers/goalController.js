@@ -27,16 +27,15 @@ const normalizeTime = (time) => {
 };
 
 /* =========================================
-   GET GOALS (UPDATED FOR CALENDAR FILTERING)
+   GET GOALS (FILTERED BY DATE)
 ========================================= */
 export const getGoals = async (req, res) => {
   try {
     const userId = req.userId;
-    const { date } = req.query; // Get date from query params (e.g. ?date=2026-04-06)
+    const { date } = req.query;
 
     let query = { userId };
 
-    // If a date is provided, filter goals for that specific day (start of day to end of day)
     if (date) {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -60,7 +59,7 @@ export const getGoals = async (req, res) => {
 };
 
 /* =========================================
-   CREATE GOAL (UPDATED TO ACCEPT DATE)
+   CREATE GOAL (WITH DUPLICATE PROTECTION)
 ========================================= */
 export const createGoal = async (req, res) => {
   try {
@@ -72,7 +71,7 @@ export const createGoal = async (req, res) => {
       duration,
       category,
       color,
-      date // Accept date from request body
+      date 
     } = req.body;
 
     if (!title || title.trim() === "") {
@@ -81,11 +80,29 @@ export const createGoal = async (req, res) => {
 
     title = title.trim();
     duration = Number(duration) || 60;
-
-    if (duration < 5) duration = 5;
-    if (duration > 600) duration = 600;
-
     time = normalizeTime(time);
+    
+    const targetDate = date ? new Date(date) : new Date();
+
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existing = await Goal.findOne({
+      userId,
+      time,
+      date: { $gte: startOfDay, $lte: endOfDay }
+    });
+
+    if (existing) {
+      existing.title = title;
+      existing.duration = duration;
+      existing.category = category || "📘";
+      existing.color = color || "#89CFF0";
+      await existing.save();
+      return res.status(200).json(existing);
+    }
 
     const count = await Goal.countDocuments({ userId });
 
@@ -98,7 +115,7 @@ export const createGoal = async (req, res) => {
       color: color || "#89CFF0",
       status: "pending",
       order: count,
-      date: date || new Date() // Use provided date or default to now
+      date: targetDate
     });
 
     res.status(201).json(goal);
@@ -127,12 +144,6 @@ export const updateGoal = async (req, res) => {
 
     if (updates.time) {
       updates.time = normalizeTime(updates.time);
-    }
-
-    if (updates.duration) {
-      updates.duration = Number(updates.duration);
-      if (updates.duration < 5) updates.duration = 5;
-      if (updates.duration > 600) updates.duration = 600;
     }
 
     const updatedGoal = await Goal.findByIdAndUpdate(
@@ -165,9 +176,7 @@ export const deleteGoal = async (req, res) => {
 
     await Goal.findByIdAndDelete(goalId);
 
-    /* 🔥 REORDER AFTER DELETE */
-    const remainingGoals = await Goal.find({ userId })
-      .sort({ order: 1 });
+    const remainingGoals = await Goal.find({ userId }).sort({ order: 1 });
 
     for (let i = 0; i < remainingGoals.length; i++) {
       remainingGoals[i].order = i;
@@ -183,7 +192,7 @@ export const deleteGoal = async (req, res) => {
 };
 
 /* =========================================
-   COMPLETE GOAL
+   COMPLETE GOAL (RESTORED EXPORT)
 ========================================= */
 export const completeGoal = async (req, res) => {
   try {
@@ -210,18 +219,45 @@ export const completeGoal = async (req, res) => {
 };
 
 /* =========================================
-   RESET GOALS
+   RESET DAILY GOALS (STRICT CLEANUP)
+========================================= */
+export const resetDailyGoals = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ error: "Date is required" });
+    }
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const result = await Goal.deleteMany({ 
+      userId, 
+      date: { $gte: startOfDay, $lte: endOfDay } 
+    });
+
+    res.json({ message: `Success: Cleared ${result.deletedCount} goals for ${date}` });
+
+  } catch (error) {
+    console.error("Reset daily goals error:", error);
+    res.status(500).json({ error: "Failed to reset daily goals" });
+  }
+};
+
+/* =========================================
+   RESET ALL GOALS
 ========================================= */
 export const resetGoals = async (req, res) => {
   try {
     const userId = req.userId;
-
     await Goal.deleteMany({ userId });
-
     res.json({ message: "All goals cleared" });
-
   } catch (error) {
-    console.error("Reset goals error:", error);
     res.status(500).json({ error: "Failed to reset goals" });
   }
 };
@@ -234,10 +270,6 @@ export const reorderGoals = async (req, res) => {
     const userId = req.userId;
     const { orderedIds } = req.body;
 
-    if (!Array.isArray(orderedIds)) {
-      return res.status(400).json({ error: "Invalid order data" });
-    }
-
     for (let i = 0; i < orderedIds.length; i++) {
       await Goal.findOneAndUpdate(
         { _id: orderedIds[i], userId },
@@ -245,10 +277,8 @@ export const reorderGoals = async (req, res) => {
       );
     }
 
-    res.json({ message: "Goals reordered successfully" });
-
+    res.json({ message: "Goals reordered" });
   } catch (error) {
-    console.error("Reorder error:", error);
-    res.status(500).json({ error: "Failed to reorder goals" });
+    res.status(500).json({ error: "Failed to reorder" });
   }
 };

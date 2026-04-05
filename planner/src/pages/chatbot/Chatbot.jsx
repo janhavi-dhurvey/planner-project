@@ -72,12 +72,20 @@ const Chatbot = () => {
   };
 
   /* =========================================
-      PRO AUTO-PARSER (FOR GOALS & DEADLINES)
+      SMART AUTO-PARSER (UPGRADED)
   ========================================= */
   const autoSyncData = async (aiText, userInput) => {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // 1. Extract Goals (Format: Subject - Time - Duration)
+    // 1. Await the cleanup to prevent duplication ghosting
+    try {
+      await API.delete(`/goals/daily?date=${todayStr}`);
+    } catch (e) {
+      console.error("Reset Error:", e);
+    }
+
+    // 2. Extract and Save New Goals
     const lines = aiText.split("\n");
     for (const line of lines) {
       if (line.includes(" - ") && (line.includes("AM") || line.includes("PM"))) {
@@ -85,33 +93,45 @@ const Chatbot = () => {
         if (parts.length >= 3) {
           try {
             await API.post("/goals", {
-              title: parts[0].trim(),
+              title: parts[0].replace(/^-?\s*/, "").trim(), // Cleans leading dashes
               time: parts[1].trim(),
               duration: parseInt(parts[2]) || 60,
-              date: today // CRITICAL: Fixes Goal Tab visibility
+              date: todayStr 
             });
           } catch (e) { console.error("Goal Sync Error", e); }
         }
       }
     }
 
-    // 2. Extract Deadlines (If user mentioned a date/deadline)
+    // 3. Upgraded Deadline Detection (Handles "15 April")
     const lowerInput = userInput.toLowerCase();
-    if (lowerInput.includes("deadline") || lowerInput.includes("before") || lowerInput.includes("by")) {
-       // Extracting a rough title from input
-       const title = userInput.split("planner for ")[1]?.split("...")[0] || "New Deadline";
-       
-       // Simple Logic: If "April ends", set to April 30
-       let dueDate = new Date();
-       if(lowerInput.includes("april")) dueDate = new Date(2026, 3, 30);
-       
-       try {
-         await API.post("/deadlines", {
-           title: `Finish ${title}`,
-           dueDate: dueDate,
-           priority: "High"
-         });
-       } catch (e) { console.error("Deadline Sync Error", e); }
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    let detectedDate = null;
+
+    // Detect patterns like "15 April" or "April 15"
+    const dateRegex = /(\d{1,2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(\d{1,2})/i;
+    const match = userInput.match(dateRegex);
+
+    if (match) {
+      const day = parseInt(match[1] || match[4]);
+      const monthStr = (match[2] || match[3]).toLowerCase().substring(0, 3);
+      const monthIdx = months.indexOf(monthStr);
+      detectedDate = new Date(2026, monthIdx, day);
+    } else if (lowerInput.includes("april ends")) {
+      detectedDate = new Date(2026, 3, 30);
+    }
+
+    if (detectedDate && !isNaN(detectedDate.getTime())) {
+      try {
+        const subjects = userInput.match(/(DAA|LPCC|EH|DSA|Python|Java|Aptitude|DSML)/gi) || ["Exam"];
+        const uniqueSubjects = [...new Set(subjects.map(s => s.toUpperCase()))];
+        
+        await API.post("/deadlines", {
+          title: `${uniqueSubjects.join(" & ")} Prep`,
+          dueDate: detectedDate.toISOString(),
+          priority: "High"
+        });
+      } catch (e) { console.error("Deadline Sync Error", e); }
     }
   };
 
@@ -132,9 +152,8 @@ const Chatbot = () => {
       const reply = cleanAIResponse(replyRaw);
       setMessages(prev => [...prev, { role: "assistant", text: reply }]);
 
-      // FIRE AND FORGET: Sync goals and deadlines to DB
-      autoSyncData(reply, messageToSend);
-
+      // Process sync after message is received
+      await autoSyncData(reply, messageToSend);
       loadChats();
     } catch (err) {
       console.error("CHAT ERROR:", err);
