@@ -10,9 +10,9 @@ const DeadlineSidebar = () => {
   useEffect(() => {
     fetchDeadlines();
 
-    // REFRESH TRIGGER: Sync data when user returns to this tab
-    window.addEventListener("focus", fetchDeadlines);
-    return () => window.removeEventListener("focus", fetchDeadlines);
+    const handleFocus = () => fetchDeadlines();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   const fetchDeadlines = async () => {
@@ -37,7 +37,6 @@ const DeadlineSidebar = () => {
       
       setNewDeadline({ title: "", dueDate: "" });
       setShowModal(false);
-      // Immediate refresh after manual add
       fetchDeadlines();
     } catch (err) {
       console.error("Add deadline error:", err);
@@ -58,68 +57,67 @@ const DeadlineSidebar = () => {
 
   return (
     <div style={{ 
-      padding: "24px 20px", 
+      padding: "24px 16px", 
       color: "#fff", 
       height: "100%", 
       display: "flex", 
       flexDirection: "column",
-      fontFamily: "'Inter', sans-serif"
+      fontFamily: "'Inter', sans-serif",
+      boxSizing: "border-box"
     }}>
-      {/* HEADER */}
+      {/* HEADER - FIXED TOP */}
       <div style={{ 
         display: "flex", 
         justifyContent: "space-between", 
         alignItems: "center", 
-        marginBottom: "25px",
+        marginBottom: "20px",
         flexShrink: 0 
       }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: "800", margin: 0, letterSpacing: "0.5px", color: "#ffffff" }}>
+        <h3 style={{ fontSize: "1rem", fontWeight: "800", margin: 0, letterSpacing: "1px", color: "#ffffff", opacity: 0.9 }}>
           🔔 DEADLINES
         </h3>
         <button 
           onClick={() => setShowModal(true)}
           style={{
-            background: "#ffffff",
-            border: "none",
-            color: "#6c7543",
-            borderRadius: "10px",
-            width: "32px",
-            height: "32px",
+            background: "rgba(255, 255, 255, 0.2)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            color: "#ffffff",
+            borderRadius: "8px",
+            width: "28px",
+            height: "28px",
             cursor: "pointer",
-            fontWeight: "900",
-            fontSize: "18px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            fontWeight: "bold",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transition: "0.2s"
+            transition: "all 0.2s ease"
           }}
         >
           +
         </button>
       </div>
 
-      {/* LIST AREA */}
-      <div style={{ 
+      {/* SCROLLABLE LIST AREA - FILLS REMAINING SPACE */}
+      <div className="custom-sidebar-scroll" style={{ 
         flexGrow: 1, 
         overflowY: "auto", 
         display: "flex",
         flexDirection: "column",
-        gap: "12px",
-        paddingBottom: "20px"
+        gap: "14px",
+        paddingRight: "4px"
       }}>
-        {loading ? (
-          <p style={{ opacity: 0.6, fontSize: "13px", fontWeight: "500" }}>Updating tracking...</p>
+        {loading && deadlines.length === 0 ? (
+          <p style={{ opacity: 0.6, fontSize: "12px", textAlign: "center", marginTop: "20px" }}>Refreshing data...</p>
         ) : deadlines.length === 0 ? (
           <div style={{ 
             textAlign: "center", 
-            marginTop: "30px", 
-            padding: "20px", 
+            marginTop: "20px", 
+            padding: "24px 16px", 
             background: "rgba(255,255,255,0.05)", 
             borderRadius: "16px",
-            border: "1px dashed rgba(255,255,255,0.2)" 
+            border: "1px dashed rgba(255,255,255,0.15)" 
           }}>
-            <p style={{ fontSize: "13px", fontWeight: "600", opacity: 0.8 }}>No Deadlines Tracked</p>
+            <p style={{ fontSize: "12px", fontWeight: "500", opacity: 0.7, margin: 0 }}>No upcoming deadlines</p>
           </div>
         ) : (
           deadlines.map((d) => {
@@ -130,43 +128,45 @@ const DeadlineSidebar = () => {
               <div 
                 key={d._id}
                 style={{
-                  background: "rgba(255, 255, 255, 0.12)",
-                  padding: "16px",
-                  borderRadius: "14px",
-                  borderLeft: `4px solid ${isUrgent ? "#ff6b6b" : "#a3b18a"}`,
-                  backdropFilter: "blur(12px)",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.05)",
-                  transition: "transform 0.2s ease"
+                  background: "rgba(255, 255, 255, 0.15)",
+                  padding: "18px 16px",
+                  borderRadius: "16px",
+                  borderLeft: `5px solid ${isUrgent ? "#ff6b6b" : "#c2d6a3"}`,
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  minHeight: "80px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center"
                 }}
               >
                 <div style={{ 
                   fontWeight: "700", 
                   fontSize: "14px", 
                   color: "#ffffff", 
-                  marginBottom: "10px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis"
+                  marginBottom: "12px",
+                  lineHeight: "1.3"
                 }}>
                   {d.title}
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "600", opacity: 0.7, letterSpacing: "0.3px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", opacity: 0.8, background: "rgba(0,0,0,0.1)", padding: "4px 8px", borderRadius: "6px" }}>
                     {new Date(d.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </div>
 
-                  <div style={{ textAlign: "right", display: "flex", alignItems: "baseline", gap: "4px" }}>
+                  <div style={{ textAlign: "right" }}>
                     <span style={{ 
-                      fontSize: "22px", 
+                      fontSize: "20px", 
                       fontWeight: "900", 
                       color: isUrgent ? "#ff6b6b" : "#ffffff",
-                      lineHeight: "1"
+                      lineHeight: "1",
+                      display: "block"
                     }}>
                       {daysLeft}
                     </span>
-                    <span style={{ fontSize: "10px", fontWeight: "800", opacity: 0.6, textTransform: "uppercase" }}>
-                      Days
+                    <span style={{ fontSize: "9px", fontWeight: "800", opacity: 0.5, textTransform: "uppercase" }}>
+                      Days left
                     </span>
                   </div>
                 </div>
@@ -176,39 +176,46 @@ const DeadlineSidebar = () => {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* INLINE CSS FOR HIDING SCROLLBAR BUT ALLOWING SCROLL */}
+      <style>{`
+        .custom-sidebar-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          borderRadius: 10px;
+        }
+      `}</style>
+
+      {/* MODAL (STAYS SAME) */}
       {showModal && (
         <div style={{
           position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
           background: "rgba(0,0,0,0.6)", display: "flex", justifyContent: "center", alignItems: "center",
           zIndex: 9999, padding: "20px"
         }}>
-          <div style={{ 
-            background: "#ffffff", 
-            padding: "28px", 
-            borderRadius: "24px", 
-            width: "100%", 
-            maxWidth: "320px",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.2)"
-          }}>
-            <h4 style={{ margin: "0 0 20px 0", textAlign: "center", color: "#4a7c59", fontWeight: "800" }}>Set New Deadline</h4>
+          <div style={{ background: "#ffffff", padding: "28px", borderRadius: "24px", width: "100%", maxWidth: "320px", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
+            <h4 style={{ margin: "0 0 20px 0", textAlign: "center", color: "#4a7c59", fontWeight: "800" }}>New Deadline</h4>
             <form onSubmit={handleAddDeadline}>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "900", color: "#999", display: "block", marginBottom: "6px" }}>DEADLINE TITLE</label>
+                <label style={{ fontSize: "10px", fontWeight: "900", color: "#999", display: "block", marginBottom: "6px" }}>TITLE</label>
                 <input 
-                  type="text" placeholder="e.g. Physics Final" required
+                  type="text" placeholder="Task Name" required
                   value={newDeadline.title}
                   onChange={(e) => setNewDeadline({...newDeadline, title: e.target.value})}
-                  style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "2px solid #f0f0f0", outline: "none", fontSize: "14px" }}
+                  style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "2px solid #f0f0f0", outline: "none", boxSizing: "border-box" }}
                 />
               </div>
               <div style={{ marginBottom: "24px" }}>
-                <label style={{ fontSize: "10px", fontWeight: "900", color: "#999", display: "block", marginBottom: "6px" }}>TARGET DATE</label>
+                <label style={{ fontSize: "10px", fontWeight: "900", color: "#999", display: "block", marginBottom: "6px" }}>DUE DATE</label>
                 <input 
                   type="date" required
                   value={newDeadline.dueDate}
                   onChange={(e) => setNewDeadline({...newDeadline, dueDate: e.target.value})}
-                  style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "2px solid #f0f0f0", outline: "none", fontSize: "14px" }}
+                  style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "2px solid #f0f0f0", outline: "none", boxSizing: "border-box" }}
                 />
               </div>
               <div style={{ display: "flex", gap: "10px" }}>

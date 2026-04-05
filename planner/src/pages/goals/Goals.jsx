@@ -43,13 +43,10 @@ const Goals = () => {
   ========================================= */
   const loadGoals = useCallback(async () => {
     try {
-      // Logic Sync: Ensure we only fetch for the current local day
       const today = getLocalDate();
       const res = await API.get(`/goals?date=${today}`);
-
       let goalData = Array.isArray(res.data) ? res.data : [];
 
-      // Professional Sorting: Time-based
       goalData.sort((a, b) => {
         if (a.order != null && b.order != null) {
           return a.order - b.order;
@@ -66,11 +63,8 @@ const Goals = () => {
     }
   }, []);
 
-  // Effect to load goals on mount and when window regains focus
   useEffect(() => {
     loadGoals();
-    
-    // Refresh when user returns to this tab (catches AI background updates)
     window.addEventListener("focus", loadGoals);
     return () => window.removeEventListener("focus", loadGoals);
   }, [loadGoals]);
@@ -131,13 +125,16 @@ const Goals = () => {
       <Navbar />
 
       <div className="goals-container">
-        {/* LEFT PANEL: Professional Deadline Tracker */}
-        <div className="left-panel">
+        {/* LEFT PANEL: Updated to fill height and handle sidebar layout */}
+        <div className="left-panel" style={{ display: "flex", flexDirection: "column" }}>
           <div className="planner-box" style={{ 
             padding: "0", 
-            overflowY: "auto", 
+            overflowY: "hidden", 
             background: "#6c7543", 
-            borderRadius: "24px" 
+            borderRadius: "24px",
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column"
           }}>
             <DeadlineSidebar />
           </div>
@@ -192,12 +189,17 @@ const Goals = () => {
                   <span>Use the Chatbot to generate your optimized schedule!</span>
                 </div>
               ) : (
-                <div className="timeline-fade-in">
+                <div className="timeline-fade-in" style={{ paddingBottom: "20px" }}>
                   {goals.map((goal) => (
                     <div
                       key={goal._id}
                       className="goal-tab"
-                      style={{ background: goal.color }}
+                      style={{ 
+                        background: goal.color,
+                        marginBottom: "12px", // Fixes the spacing between tabs
+                        borderRadius: "16px",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.05)"
+                      }}
                       onClick={() => setActiveGoal(goal)}
                     >
                       <div className="goal-icon-circle">

@@ -72,31 +72,37 @@ const Chatbot = () => {
   };
 
   /* =========================================
-      SMART AUTO-PARSER (UPGRADED)
+      SMART AUTO-PARSER (COLOR & SYNC FIX)
   ========================================= */
   const autoSyncData = async (aiText, userInput) => {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // 1. Await the cleanup to prevent duplication ghosting
+    // 1. Await cleanup to ensure no ghosting
     try {
       await API.delete(`/goals/daily?date=${todayStr}`);
     } catch (e) {
       console.error("Reset Error:", e);
     }
 
-    // 2. Extract and Save New Goals
+    // 2. Extract and Save New Goals with Dynamic Styling
     const lines = aiText.split("\n");
     for (const line of lines) {
       if (line.includes(" - ") && (line.includes("AM") || line.includes("PM"))) {
         const parts = line.split(" - ");
         if (parts.length >= 3) {
+          const rawTitle = parts[0].replace(/^-?\s*/, "").trim();
+          const isBreak = rawTitle.toLowerCase().includes("break");
+
           try {
             await API.post("/goals", {
-              title: parts[0].replace(/^-?\s*/, "").trim(), // Cleans leading dashes
+              title: rawTitle,
               time: parts[1].trim(),
               duration: parseInt(parts[2]) || 60,
-              date: todayStr 
+              date: todayStr,
+              // DYNAMIC STYLING RESTORATION
+              color: isBreak ? "#FFD966" : "#89CFF0", // Yellow for breaks, Blue for studies
+              category: isBreak ? "☕" : "📘"       // Coffee for breaks, Book for studies
             });
           } catch (e) { console.error("Goal Sync Error", e); }
         }
@@ -108,7 +114,6 @@ const Chatbot = () => {
     const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
     let detectedDate = null;
 
-    // Detect patterns like "15 April" or "April 15"
     const dateRegex = /(\d{1,2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(\d{1,2})/i;
     const match = userInput.match(dateRegex);
 
@@ -152,7 +157,6 @@ const Chatbot = () => {
       const reply = cleanAIResponse(replyRaw);
       setMessages(prev => [...prev, { role: "assistant", text: reply }]);
 
-      // Process sync after message is received
       await autoSyncData(reply, messageToSend);
       loadChats();
     } catch (err) {
