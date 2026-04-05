@@ -1,0 +1,75 @@
+/* =========================================
+   CALENDAR PAGE ANIMATIONS
+   ========================================= */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   LOADING SPINNER
+   ========================================= */
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    margin: 20px auto;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #5a5a5a; /* Matches your professional theme */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================
+   DATE INPUT CUSTOMIZATION
+   ========================================= */
+
+/* Making the native date picker feel more modern */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.4); /* Softens the icon color */
+    transition: 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0.2);
+    transform: scale(1.1);
+}
+
+/* =========================================
+   TIMELINE HOVER EFFECTS
+   ========================================= */
+
+/* Adding a slight lift effect to your timeline bars */
+div[style*="display: flex"][style*="align-items: center"][style*="margin-bottom: 22px"]:hover div[style*="box-shadow"] {
+    transform: translateX(5px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.18) !important;
+}
+
+/* =========================================
+   RESPONSIVE TWEAKS
+   ========================================= */
+
+@media (max-width: 768px) {
+    input[type="date"] {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    div[style*="width: 85%"] {
+        width: 95% !important;
+    }
+}

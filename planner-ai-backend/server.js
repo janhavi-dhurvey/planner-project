@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
+import deadlineRoutes from "./routes/deadlineRoutes.js"; // Added this
 
 /* =========================================
    LOAD ENV
@@ -65,6 +66,9 @@ app.use("/api/chat", chatRoutes);
 
 /* GOALS */
 app.use("/api/goals", goalRoutes);
+
+/* DEADLINES (NEW - Added this to fix your manual add error) */
+app.use("/api/deadlines", deadlineRoutes);
 
 /* =========================================
    HEALTH CHECK

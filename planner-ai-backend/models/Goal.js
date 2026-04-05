@@ -22,6 +22,16 @@ const GoalSchema = new mongoose.Schema(
     },
 
     /* =========================================
+       CALENDAR DATE (NEW - CRUCIAL FOR CALENDAR)
+    ========================================= */
+    date: {
+      type: Date,
+      required: true,
+      default: Date.now, // Defaults to today if not specified
+      index: true
+    },
+
+    /* =========================================
        TIME
     ========================================= */
 
@@ -89,9 +99,11 @@ const GoalSchema = new mongoose.Schema(
 );
 
 /* =========================================
-   INDEXES
+   INDEXES (UPDATED FOR PERFORMANCE)
 ========================================= */
 
+// Adding userId + date index so searching by calendar date is instant
+GoalSchema.index({ userId: 1, date: 1 }); 
 GoalSchema.index({ userId: 1, order: 1 });
 GoalSchema.index({ userId: 1, createdAt: -1 });
 GoalSchema.index({ userId: 1, time: 1 });

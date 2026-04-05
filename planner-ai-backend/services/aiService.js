@@ -26,45 +26,39 @@ const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /* =========================================
-   🔥 SMART SYSTEM PROMPT (UPDATED MINIMALLY)
+   🔥 SMART SYSTEM PROMPT (UPDATED FOR DEADLINES)
 ========================================= */
 
 const systemPrompt = {
   role: "system",
   content: `
-You are a helpful academic assistant like ChatGPT.
+You are a professional AI Productivity Planner. 
 
-Your responses should feel natural, friendly, and useful.
+Your goal is to generate OPTIMIZED study schedules based on the user's subjects and DEADLINES.
 
-IMPORTANT:
-
-- Explain clearly (like a mentor)
-- Give structured sections
-- Be practical (not generic)
-- Use light emojis for clarity
-- Keep it readable (not too long, not too short)
-
-ALSO IMPORTANT:
-
-At the END of your response, ALWAYS include a clean time-based study timeline.
+INSTRUCTIONS:
+1. Explain clearly like a high-performance coach.
+2. If the user mentions a DEADLINE (exam date, project due date), acknowledge it and prioritize those subjects.
+3. If a deadline is very close (less than 7 days), make the schedule more intensive.
+4. Use light emojis for clarity.
 
 ⚠️ CRITICAL RULE:
-- NEVER use the word "Subject"
-- ALWAYS use REAL subject names from the user input (e.g., Python, DSA, Java, ML)
+- NEVER use the word "Subject".
+- ALWAYS use REAL subject names from user input (e.g., Python, Physics, DSA).
 
 FORMAT:
+Include a brief motivational strategy, then the timeline.
 
+TIMELINE FORMAT:
 Python - 05:00 PM - 60 minutes
 Break - 06:00 PM - 15 minutes
-Java - 06:15 PM - 60 minutes
+Physics - 06:15 PM - 60 minutes
 
 RULES FOR TIMELINE:
-- 4–6 sessions
-- Break after each study
-- Start from given time
-- Keep realistic
-
-Do NOT skip the timeline.
+- 4–6 sessions.
+- Break after each study block.
+- Start from the current time provided in the prompt.
+- Ensure the plan is realistic and optimized for the upcoming deadlines.
 `
 };
 
@@ -73,9 +67,7 @@ Do NOT skip the timeline.
 ========================================= */
 
 const fallbackPlanner = () => {
-
   const now = new Date();
-
   const formatTime = (date) =>
     date.toLocaleTimeString("en-IN", {
       hour: "2-digit",
@@ -91,21 +83,16 @@ const fallbackPlanner = () => {
   };
 
   return `
-📅 Daily Planner
+📅 Daily Planner (Fallback Mode)
 
-Start with your most important subject first, then rotate to avoid fatigue.
-
-⏱ Total Time: ~3 hours
-
-Focus on consistency rather than perfection.
+Focus on consistency. Since the AI is currently unreachable, follow this balanced structure:
 
 Timeline:
-
-${make("Study", 60)}
+${make("Primary Subject", 60)}
 ${make("Break", 15)}
-${make("Study", 60)}
+${make("Secondary Subject", 60)}
 ${make("Break", 15)}
-${make("Revision", 45)}
+${make("Revision/Practice", 45)}
 `;
 };
 
@@ -114,9 +101,7 @@ ${make("Revision", 45)}
 ========================================= */
 
 export const askAI = async (messages) => {
-
   try {
-
     if (!process.env.OPENROUTER_API_KEY) {
       throw new Error("OPENROUTER_API_KEY missing");
     }
@@ -125,14 +110,18 @@ export const askAI = async (messages) => {
       throw new Error("Messages array required");
     }
 
-    const currentTime = new Date().toLocaleTimeString("en-IN", {
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit"
     });
+    
+    // Added current date so AI can calculate days remaining until a deadline
+    const currentDate = now.toDateString();
 
     const timePrompt = {
       role: "system",
-      content: `Current time is ${currentTime}. Start the timeline from this time.`
+      content: `Current time is ${currentTime} on ${currentDate}. If the user mentions a deadline, calculate the remaining days from today and optimize the plan accordingly.`
     };
 
     /* ✅ FINAL MESSAGE STACK */
@@ -145,9 +134,7 @@ export const askAI = async (messages) => {
     let lastError;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-
       try {
-
         console.log(`🧠 AI Request (Attempt ${attempt + 1})`);
 
         const response = await aiClient.post(
@@ -163,7 +150,7 @@ export const askAI = async (messages) => {
               Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
               "Content-Type": "application/json",
               "HTTP-Referer": process.env.CLIENT_URL || "http://localhost:5173",
-              "X-Title": "AI Planner"
+              "X-Title": "AI Planner Pro"
             }
           }
         );
@@ -178,15 +165,11 @@ export const askAI = async (messages) => {
         }
 
         console.log("✅ AI SUCCESS");
-
         return aiReply.trim();
 
       } catch (err) {
-
         lastError = err;
-
         console.error(`❌ Attempt ${attempt + 1} failed`);
-
         if (err.response) {
           console.error("API ERROR:", err.response.data);
         } else {
@@ -202,9 +185,7 @@ export const askAI = async (messages) => {
     throw lastError;
 
   } catch (error) {
-
     console.error("🔥 FINAL AI ERROR:", error.message);
-
     return fallbackPlanner();
   }
 };

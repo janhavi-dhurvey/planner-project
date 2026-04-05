@@ -4,7 +4,6 @@ import Goal from "../models/Goal.js";
    NORMALIZE TIME (SAFE FIX)
 ========================================= */
 const normalizeTime = (time) => {
-
   if (!time || typeof time !== "string") return "";
 
   if (time.includes("AM") || time.includes("PM")) {
@@ -28,13 +27,27 @@ const normalizeTime = (time) => {
 };
 
 /* =========================================
-   GET GOALS
+   GET GOALS (UPDATED FOR CALENDAR FILTERING)
 ========================================= */
 export const getGoals = async (req, res) => {
   try {
     const userId = req.userId;
+    const { date } = req.query; // Get date from query params (e.g. ?date=2026-04-06)
 
-    const goals = await Goal.find({ userId })
+    let query = { userId };
+
+    // If a date is provided, filter goals for that specific day (start of day to end of day)
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.date = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    const goals = await Goal.find(query)
       .sort({ order: 1, createdAt: 1 })
       .lean();
 
@@ -47,7 +60,7 @@ export const getGoals = async (req, res) => {
 };
 
 /* =========================================
-   CREATE GOAL
+   CREATE GOAL (UPDATED TO ACCEPT DATE)
 ========================================= */
 export const createGoal = async (req, res) => {
   try {
@@ -58,7 +71,8 @@ export const createGoal = async (req, res) => {
       time,
       duration,
       category,
-      color
+      color,
+      date // Accept date from request body
     } = req.body;
 
     if (!title || title.trim() === "") {
@@ -83,7 +97,8 @@ export const createGoal = async (req, res) => {
       category: category || "📘",
       color: color || "#89CFF0",
       status: "pending",
-      order: count
+      order: count,
+      date: date || new Date() // Use provided date or default to now
     });
 
     res.status(201).json(goal);
