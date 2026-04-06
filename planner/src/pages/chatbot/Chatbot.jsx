@@ -72,7 +72,7 @@ const Chatbot = () => {
   };
 
   /* =========================================
-      SMART AUTO-PARSER (STRICT VERSION)
+      SMART AUTO-PARSER (STRICT ORDERING)
   ========================================= */
   const autoSyncData = async (aiText, userInput) => {
     const now = new Date();
@@ -85,11 +85,11 @@ const Chatbot = () => {
       console.error("Reset Error:", e);
     }
 
-    // 2. PARSE ONLY TODAY'S TIMELINE (Avoids Day 1, Day 2 duplicates)
+    // 2. PARSE WITH EXPLICIT ORDER INDEX
     const lines = aiText.split("\n");
+    let sequenceIndex = 0; // Tracks the visual order from AI text
+
     for (const line of lines) {
-      // Logic: Only parse lines containing " - " and time indicators (AM/PM)
-      // Filters out "Day 1:", "1. DAA", etc.
       if (line.includes(" - ") && (line.includes("AM") || line.includes("PM"))) {
         const parts = line.split(" - ");
         if (parts.length >= 3) {
@@ -103,8 +103,10 @@ const Chatbot = () => {
               duration: parseInt(parts[2]) || 60,
               date: todayStr,
               color: isBreak ? "#FFD966" : "#89CFF0",
-              category: isBreak ? "☕" : "📘"
+              category: isBreak ? "☕" : "📘",
+              order: sequenceIndex // CRITICAL: Forces visual sequence in DB
             });
+            sequenceIndex++; 
           } catch (e) { console.error("Goal Sync Error", e); }
         }
       }
@@ -129,7 +131,7 @@ const Chatbot = () => {
 
     if (detectedDate && !isNaN(detectedDate.getTime())) {
       try {
-        const subjects = userInput.match(/(DAA|LPCC|EH|DSA|Python|Java|Aptitude|DSML|CN)/gi) || ["Exam"];
+        const subjects = userInput.match(/(DAA|LPCC|EH|DSA|Python|Java|Aptitude|DSML|CN|AWS)/gi) || ["Exam"];
         const uniqueSubjects = [...new Set(subjects.map(s => s.toUpperCase()))];
         
         await API.post("/deadlines", {
@@ -158,7 +160,6 @@ const Chatbot = () => {
       const reply = cleanAIResponse(replyRaw);
       setMessages(prev => [...prev, { role: "assistant", text: reply }]);
 
-      // CRITICAL FIX: We await the sync so the navigation doesn't cut it off
       await autoSyncData(reply, messageToSend);
       loadChats();
     } catch (err) {

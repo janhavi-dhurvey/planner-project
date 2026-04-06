@@ -34,8 +34,15 @@ const getTimeSortValue = (timeStr) => {
   try {
     const [time, period] = timeStr.split(" ");
     let [hour, minute] = time.split(":").map(Number);
-    if (period === "PM" && hour < 12) hour += 12;
-    if (period === "AM" && hour === 12) hour = 0;
+    
+    // LOGIC FIX: Treat 12:00 AM as the end of the day (24:00) 
+    // so it doesn't jump to the top of the list.
+    if (period === "AM" && hour === 12) {
+      hour = 24; 
+    } else if (period === "PM" && hour < 12) {
+      hour += 12;
+    }
+    
     return hour * 60 + minute;
   } catch {
     return 0;
@@ -64,8 +71,12 @@ export const getGoals = async (req, res) => {
 
     const goals = await Goal.find(query).lean();
 
-    // Sort by calculated time value so AM/PM is handled correctly
-    goals.sort((a, b) => getTimeSortValue(a.time) - getTimeSortValue(b.time));
+    // Sort primarily by Time Value, and secondarily by the original AI creation order
+    goals.sort((a, b) => {
+      const timeDiff = getTimeSortValue(a.time) - getTimeSortValue(b.time);
+      if (timeDiff !== 0) return timeDiff;
+      return (a.order || 0) - (b.order || 0);
+    });
 
     res.json(goals);
 
@@ -121,7 +132,7 @@ export const createGoal = async (req, res) => {
       return res.status(200).json(existing);
     }
 
-    const count = await Goal.countDocuments({ userId });
+    const count = await Goal.countDocuments({ userId, date: { $gte: startOfDay, $lte: endOfDay } });
 
     const goal = await Goal.create({
       userId,

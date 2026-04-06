@@ -14,12 +14,33 @@ const Calendar = () => {
   ========================================= */
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
-    // This creates a YYYY-MM-DD string based on your local time, not UTC
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   });
+
+  /* =========================================
+      HELPER: LATE NIGHT SORTING LOGIC
+  ========================================= */
+  const parseTimeForSort = (timeStr) => {
+    if (!timeStr) return 0;
+    try {
+      const [time, period] = timeStr.split(" ");
+      let [hour, minute] = time.split(":").map(Number);
+      
+      // LOGIC FIX: Treat 12:00 AM as the end of the day cycle (24:00)
+      if (period === "AM" && hour === 12) {
+        hour = 24; 
+      } else if (period === "PM" && hour < 12) {
+        hour += 12;
+      }
+      
+      return hour * 60 + minute;
+    } catch {
+      return 0;
+    }
+  };
 
   /* =========================================
       LOAD GOALS (FETCH BY DATE)
@@ -37,11 +58,14 @@ const Calendar = () => {
       const res = await API.get(`/goals?date=${date}`);
       const data = Array.isArray(res.data) ? res.data : [];
 
+      // SORTING FIX: Use numeric calculation to handle AM/PM correctly
       const sorted = [...data].sort((a, b) => {
-        if (!a?.time || !b?.time) return 0;
-        const t1 = new Date(`1970 ${a.time}`);
-        const t2 = new Date(`1970 ${b.time}`);
-        return t1 - t2;
+        // First try sorting by the 'order' property assigned by Chatbot
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        // Fallback to numeric time sorting
+        return parseTimeForSort(a.time) - parseTimeForSort(b.time);
       });
 
       setGoals(sorted);

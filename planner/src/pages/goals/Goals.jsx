@@ -30,8 +30,14 @@ const Goals = () => {
     try {
       const [time, period] = timeStr.split(" ");
       let [hour, minute] = time.split(":").map(Number);
-      if (period === "PM" && hour < 12) hour += 12;
-      if (period === "AM" && hour === 12) hour = 0;
+      
+      // Handle Midnight (12:00 AM) as the end of the day sequence
+      if (period === "AM" && hour === 12) {
+        hour = 24; 
+      } else if (period === "PM" && hour < 12) {
+        hour += 12;
+      }
+      
       return hour * 60 + minute;
     } catch {
       return 0;
@@ -47,11 +53,13 @@ const Goals = () => {
       const res = await API.get(`/goals?date=${today}`);
       let goalData = Array.isArray(res.data) ? res.data : [];
 
-      // Professional Sorting using numeric time value
+      // SORTING FIX: Primarily use the "order" from Chatbot sequence, 
+      // fallback to numeric time calculation.
       goalData.sort((a, b) => {
-        const timeA = parseTime(a.time);
-        const timeB = parseTime(b.time);
-        return timeA - timeB;
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        return parseTime(a.time) - parseTime(b.time);
       });
 
       setGoals(goalData);
