@@ -26,7 +26,7 @@ const delay = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /* =========================================
-   🔥 SMART SYSTEM PROMPT (UPDATED FOR DEADLINES)
+   🔥 SMART SYSTEM PROMPT (FIXED FOR DUPLICATION)
 ========================================= */
 
 const systemPrompt = {
@@ -34,31 +34,28 @@ const systemPrompt = {
   content: `
 You are a professional AI Productivity Planner. 
 
-Your goal is to generate OPTIMIZED study schedules based on the user's subjects and DEADLINES.
+Your goal is to generate an OPTIMIZED study schedule for TODAY ONLY.
 
-INSTRUCTIONS:
-1. Explain clearly like a high-performance coach.
-2. If the user mentions a DEADLINE (exam date, project due date), acknowledge it and prioritize those subjects.
-3. If a deadline is very close (less than 7 days), make the schedule more intensive.
-4. Use light emojis for clarity.
-
-⚠️ CRITICAL RULE:
-- NEVER use the word "Subject".
-- ALWAYS use REAL subject names from user input (e.g., Python, Physics, DSA).
+⚠️ CRITICAL RULES TO PREVENT UI ERRORS:
+1. ONLY provide ONE timeline. It must be for the current date provided.
+2. NEVER use "Day 1", "Day 2", "Week 1", etc., as headings for the timeline.
+3. If you want to suggest a long-term plan (e.g., "Next 3 days"), describe it in plain paragraphs ONLY. Do NOT use the "Time - Duration" format for future days.
+4. ONLY use the "Time - Duration" format for TODAY'S immediate schedule.
+5. NEVER use the word "Subject". Use REAL names (Python, DSA, etc.).
 
 FORMAT:
-Include a brief motivational strategy, then the timeline.
+Brief motivational strategy (1 paragraph).
+Then, Today's Timeline.
 
-TIMELINE FORMAT:
+TIMELINE FORMAT (Strictly follow this for today only):
 Python - 05:00 PM - 60 minutes
 Break - 06:00 PM - 15 minutes
-Physics - 06:15 PM - 60 minutes
+DSA - 06:15 PM - 60 minutes
 
 RULES FOR TIMELINE:
-- 4–6 sessions.
+- 4–6 sessions for today.
 - Break after each study block.
-- Start from the current time provided in the prompt.
-- Ensure the plan is realistic and optimized for the upcoming deadlines.
+- Start from the current time provided.
 `
 };
 
@@ -85,14 +82,14 @@ const fallbackPlanner = () => {
   return `
 📅 Daily Planner (Fallback Mode)
 
-Focus on consistency. Since the AI is currently unreachable, follow this balanced structure:
+Focus on consistency. Since the AI is currently unreachable, follow this structure:
 
 Timeline:
-${make("Primary Subject", 60)}
+${make("Primary Study", 60)}
 ${make("Break", 15)}
-${make("Secondary Subject", 60)}
+${make("Secondary Study", 60)}
 ${make("Break", 15)}
-${make("Revision/Practice", 45)}
+${make("Revision", 45)}
 `;
 };
 
@@ -116,12 +113,11 @@ export const askAI = async (messages) => {
       minute: "2-digit"
     });
     
-    // Added current date so AI can calculate days remaining until a deadline
     const currentDate = now.toDateString();
 
     const timePrompt = {
       role: "system",
-      content: `Current time is ${currentTime} on ${currentDate}. If the user mentions a deadline, calculate the remaining days from today and optimize the plan accordingly.`
+      content: `Current time is ${currentTime} on ${currentDate}. Provide a timeline for TODAY ONLY. Do not use list numbers or "Day X" labels for the timeline entries.`
     };
 
     /* ✅ FINAL MESSAGE STACK */
@@ -142,7 +138,7 @@ export const askAI = async (messages) => {
           {
             model: DEFAULT_MODEL,
             messages: safeMessages,
-            temperature: 0.8,
+            temperature: 0.7, // Slightly lowered for more consistent formatting
             max_tokens: 1500
           },
           {

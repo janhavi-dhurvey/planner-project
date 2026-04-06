@@ -27,7 +27,23 @@ const normalizeTime = (time) => {
 };
 
 /* =========================================
-   GET GOALS (FILTERED BY DATE)
+   HELPER: GET NUMERIC TIME FOR SORTING
+========================================= */
+const getTimeSortValue = (timeStr) => {
+  if (!timeStr) return 0;
+  try {
+    const [time, period] = timeStr.split(" ");
+    let [hour, minute] = time.split(":").map(Number);
+    if (period === "PM" && hour < 12) hour += 12;
+    if (period === "AM" && hour === 12) hour = 0;
+    return hour * 60 + minute;
+  } catch {
+    return 0;
+  }
+};
+
+/* =========================================
+   GET GOALS (UPDATED WITH SMART SORTING)
 ========================================= */
 export const getGoals = async (req, res) => {
   try {
@@ -46,9 +62,10 @@ export const getGoals = async (req, res) => {
       query.date = { $gte: startOfDay, $lte: endOfDay };
     }
 
-    const goals = await Goal.find(query)
-      .sort({ order: 1, createdAt: 1 })
-      .lean();
+    const goals = await Goal.find(query).lean();
+
+    // Sort by calculated time value so AM/PM is handled correctly
+    goals.sort((a, b) => getTimeSortValue(a.time) - getTimeSortValue(b.time));
 
     res.json(goals);
 
@@ -192,7 +209,7 @@ export const deleteGoal = async (req, res) => {
 };
 
 /* =========================================
-   COMPLETE GOAL (RESTORED EXPORT)
+   COMPLETE GOAL
 ========================================= */
 export const completeGoal = async (req, res) => {
   try {
@@ -219,7 +236,7 @@ export const completeGoal = async (req, res) => {
 };
 
 /* =========================================
-   RESET DAILY GOALS (STRICT CLEANUP)
+   RESET DAILY GOALS
 ========================================= */
 export const resetDailyGoals = async (req, res) => {
   try {

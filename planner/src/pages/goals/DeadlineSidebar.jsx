@@ -44,6 +44,17 @@ const DeadlineSidebar = () => {
     }
   };
 
+  const deleteDeadline = async (id) => {
+    if (!window.confirm("Remove this deadline?")) return;
+    try {
+      await API.delete(`/deadlines/${id}`);
+      fetchDeadlines();
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete.");
+    }
+  };
+
   const calculateDaysLeft = (dueDate) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -65,7 +76,7 @@ const DeadlineSidebar = () => {
       fontFamily: "'Inter', sans-serif",
       boxSizing: "border-box"
     }}>
-      {/* HEADER - FIXED TOP */}
+      {/* HEADER */}
       <div style={{ 
         display: "flex", 
         justifyContent: "space-between", 
@@ -97,7 +108,7 @@ const DeadlineSidebar = () => {
         </button>
       </div>
 
-      {/* SCROLLABLE LIST AREA - FILLS REMAINING SPACE */}
+      {/* LIST AREA */}
       <div className="custom-sidebar-scroll" style={{ 
         flexGrow: 1, 
         overflowY: "auto", 
@@ -134,30 +145,47 @@ const DeadlineSidebar = () => {
                   borderLeft: `5px solid ${isUrgent ? "#ff6b6b" : "#c2d6a3"}`,
                   backdropFilter: "blur(10px)",
                   boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                  minHeight: "80px",
+                  minHeight: "90px",
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "center"
+                  position: "relative",
+                  overflow: "hidden"
                 }}
               >
+                {/* DELETE BUTTON */}
+                <button 
+                  onClick={() => deleteDeadline(d._id)}
+                  style={{
+                    position: "absolute", top: "8px", right: "8px",
+                    background: "none", border: "none", color: "rgba(255,255,255,0.4)",
+                    cursor: "pointer", fontSize: "14px", padding: "4px"
+                  }}
+                  title="Remove Deadline"
+                >
+                  🗑
+                </button>
+
                 <div style={{ 
                   fontWeight: "700", 
-                  fontSize: "14px", 
+                  fontSize: "13.5px", 
                   color: "#ffffff", 
                   marginBottom: "12px",
-                  lineHeight: "1.3"
+                  lineHeight: "1.3",
+                  paddingRight: "20px",
+                  wordBreak: "break-word", // Ensures text stays inside box
+                  textTransform: "uppercase"
                 }}>
                   {d.title}
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "600", opacity: 0.8, background: "rgba(0,0,0,0.1)", padding: "4px 8px", borderRadius: "6px" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "700", opacity: 0.8, background: "rgba(0,0,0,0.15)", padding: "4px 8px", borderRadius: "6px", letterSpacing: "0.5px" }}>
                     {new Date(d.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </div>
 
                   <div style={{ textAlign: "right" }}>
                     <span style={{ 
-                      fontSize: "20px", 
+                      fontSize: "18px", 
                       fontWeight: "900", 
                       color: isUrgent ? "#ff6b6b" : "#ffffff",
                       lineHeight: "1",
@@ -165,7 +193,7 @@ const DeadlineSidebar = () => {
                     }}>
                       {daysLeft}
                     </span>
-                    <span style={{ fontSize: "9px", fontWeight: "800", opacity: 0.5, textTransform: "uppercase" }}>
+                    <span style={{ fontSize: "8px", fontWeight: "800", opacity: 0.5, textTransform: "uppercase" }}>
                       Days left
                     </span>
                   </div>
@@ -176,21 +204,13 @@ const DeadlineSidebar = () => {
         )}
       </div>
 
-      {/* INLINE CSS FOR HIDING SCROLLBAR BUT ALLOWING SCROLL */}
       <style>{`
-        .custom-sidebar-scroll::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-sidebar-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
-          borderRadius: 10px;
-        }
+        .custom-sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); borderRadius: 10px; }
       `}</style>
 
-      {/* MODAL (STAYS SAME) */}
+      {/* MODAL */}
       {showModal && (
         <div style={{
           position: "fixed", top: 0, left: 0, width: "100%", height: "100%",

@@ -72,22 +72,24 @@ const Chatbot = () => {
   };
 
   /* =========================================
-      SMART AUTO-PARSER (COLOR & SYNC FIX)
+      SMART AUTO-PARSER (STRICT VERSION)
   ========================================= */
   const autoSyncData = async (aiText, userInput) => {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    // 1. Await cleanup to ensure no ghosting
+    // 1. CLEAR PREVIOUS RECORDS FOR TODAY ONLY
     try {
       await API.delete(`/goals/daily?date=${todayStr}`);
     } catch (e) {
       console.error("Reset Error:", e);
     }
 
-    // 2. Extract and Save New Goals with Dynamic Styling
+    // 2. PARSE ONLY TODAY'S TIMELINE (Avoids Day 1, Day 2 duplicates)
     const lines = aiText.split("\n");
     for (const line of lines) {
+      // Logic: Only parse lines containing " - " and time indicators (AM/PM)
+      // Filters out "Day 1:", "1. DAA", etc.
       if (line.includes(" - ") && (line.includes("AM") || line.includes("PM"))) {
         const parts = line.split(" - ");
         if (parts.length >= 3) {
@@ -100,16 +102,15 @@ const Chatbot = () => {
               time: parts[1].trim(),
               duration: parseInt(parts[2]) || 60,
               date: todayStr,
-              // DYNAMIC STYLING RESTORATION
-              color: isBreak ? "#FFD966" : "#89CFF0", // Yellow for breaks, Blue for studies
-              category: isBreak ? "☕" : "📘"       // Coffee for breaks, Book for studies
+              color: isBreak ? "#FFD966" : "#89CFF0",
+              category: isBreak ? "☕" : "📘"
             });
           } catch (e) { console.error("Goal Sync Error", e); }
         }
       }
     }
 
-    // 3. Upgraded Deadline Detection (Handles "15 April")
+    // 3. SMART DEADLINE DETECTION
     const lowerInput = userInput.toLowerCase();
     const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
     let detectedDate = null;
@@ -128,7 +129,7 @@ const Chatbot = () => {
 
     if (detectedDate && !isNaN(detectedDate.getTime())) {
       try {
-        const subjects = userInput.match(/(DAA|LPCC|EH|DSA|Python|Java|Aptitude|DSML)/gi) || ["Exam"];
+        const subjects = userInput.match(/(DAA|LPCC|EH|DSA|Python|Java|Aptitude|DSML|CN)/gi) || ["Exam"];
         const uniqueSubjects = [...new Set(subjects.map(s => s.toUpperCase()))];
         
         await API.post("/deadlines", {
@@ -157,6 +158,7 @@ const Chatbot = () => {
       const reply = cleanAIResponse(replyRaw);
       setMessages(prev => [...prev, { role: "assistant", text: reply }]);
 
+      // CRITICAL FIX: We await the sync so the navigation doesn't cut it off
       await autoSyncData(reply, messageToSend);
       loadChats();
     } catch (err) {
